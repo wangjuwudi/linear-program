@@ -48,26 +48,26 @@ pub fn Poly::new[V] () -> Poly[V] {
   @sorted_map.new()
 }
 
-pub fn Poly::from_Array[V: Eq + Semiring + Compare] (
-  arr : Array[(Variable, V)]
-) -> Poly[V] {
-  let poly = Poly::new()
-  for x in arr {
-    poly.add_term_inplace(x.0, x.1)
-  }
-  poly
-}
 
+pub fn Poly::from_var_array[V : Eq + Compare + Semiring] (arr : Array[V], vars : Array[Variable]) -> Poly[V] {
+  let res = Poly::new()
+  for index, x in arr {
+    if x != V::zero() {
+      res._.add(vars[index], x)
+    }
+  }
+  res
+}
 pub fn Poly::add_term_inplace[V: Eq + Semiring + Compare + Zero] (
   self : Poly[V],
   var : Variable, 
   coeff : V
 ) -> Unit {
   guard coeff != V::zero() else { return }
-  if self._[var] is None {
+  if self._.get(var) is None {
     self._.add(var, coeff)
   }else{
-    let new_coeff = self._[var].unwrap() + coeff
+    let new_coeff = self._.get(var).unwrap() + coeff
     guard new_coeff != V::zero() else { self._.remove(var) }
     self._[var] = new_coeff  
   }

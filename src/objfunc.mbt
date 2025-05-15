@@ -1,4 +1,4 @@
-enum Obj_type {
+priv enum Obj_type {
   Minimize
   Maximize
 }
@@ -28,23 +28,21 @@ pub impl[V : Eq + Show + Semiring] Show for Obj_func[V] with output(
 }
 
 
-pub fn Obj_func::new[V] (s : String, poly : Poly[V]) -> Obj_func[V] {
+pub fn Obj_func::new[V] (s : String) -> Obj_func[V] {
   {
     sense : match s {
       "Min" | "Minimize" | "min" | "minimize" | "MIN" => {Minimize}
       "Max" | "MAX" | "max" | "Maximize" | "maximize" => {Maximize}
       _ => abort("Error Obj_type , Please choose 'min' or 'max'!")
     },
-    obj_poly : poly
+    obj_poly : Poly::new()
   }
 }
 
-pub fn Obj_func::from_Array[V: Eq + Semiring + Compare] (
-  arr : Array[(Variable, V)], obj_type~ : Obj_type = {Minimize}
-) -> Obj_func[V] {
+pub fn Obj_func::set_poly[V] (self : Obj_func[V], poly : Poly[V]) -> Obj_func[V] {
   {
-    sense : obj_type,
-    obj_poly : Poly::from_Array(arr)
+    sense : self.sense,
+    obj_poly : poly
   }
 }
 
@@ -81,7 +79,8 @@ test "show" {
   poly.add_term_inplace(x1, 3.5)
   println(poly)
 
-  let obj_func = Obj_func::new("max", poly)
+  let obj_func = Obj_func::new("max").set_poly(poly)
+  
   println(obj_func)
   println(obj_func.to_min())
 }

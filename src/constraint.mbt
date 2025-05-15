@@ -9,14 +9,14 @@ struct Constraint[V] {
 pub impl[V : Show + Eq + Semiring] Show for Constraint[V] with to_string (
   self : Constraint[V]
 ) -> String {
-  let mut res = "s.t.  "
+  let mut res = ""
   for x in self.eq_poly {
-    res = x.1.to_string() + " = " + x.1.to_string() + "//n      "
+    res = x.0.to_string() + " = " + x.1.to_string() + "//n      "
   } 
   for x in self.ineq_poly {
     res = res + x.0.to_string() + " \{x.1} " + x.2.to_string() + "//n      "
   }
-  res
+  "s.t.  " + res
 }
 
 pub impl[V : Show + Eq + Semiring] Show for Constraint[V] with output (
@@ -27,10 +27,10 @@ pub impl[V : Show + Eq + Semiring] Show for Constraint[V] with output (
 }
 
 ///|
-/// var_number : the number this PL question used
-pub fn Constraint::new[V](poly_number : Int) -> Constraint[V] {
-  let ep : Array[(Poly[V], V)] = Array::new(capacity = poly_number )
-  let iep : Array[(Poly[V], String, V)] = Array::new(capacity = poly_number)
+/// poly_number : the constraint number this PL question used
+pub fn Constraint::new[V]() -> Constraint[V] {
+  let ep : Array[(Poly[V], V)] = []
+  let iep : Array[(Poly[V], String, V)] = []
   {
     eq_poly : ep,
     ineq_poly : iep,
@@ -58,13 +58,36 @@ pub fn Constraint::change_ineqpoly[V] (self : Constraint[V], index : Int, poly :
   self.ineq_poly[index - 1] = (poly, s, b)
 }
 
+///|
+pub fn Constraint::from_array[V : Eq + Compare + Semiring] (
+  eqarray : Array[(Array[V], V)], 
+  ineqArray : Array[(Array[V], String, V)], 
+  vars : Array[Variable]
+) -> Constraint[V] {
+  let c = Constraint::new()
+  for eq in eqarray {
+    c.add_eqpoly(
+      Poly::from_var_array(eq.0, vars), 
+      eq.1
+    )
+  }
+  for ineq in ineqArray {
+    guard ineq.1 == ">=" || ineq.1 == "<=" else {abort("there is not '>=' or '<=' in ineq Array")}
+    c.add_ineqpoly(
+      Poly::from_var_array(ineq.0, vars),
+      ineq.1,
+      ineq.2
+    )
+  }
+  c
+} 
 
 ///|
-pub fn Constraint::from_matrix[V] (vars : Array[Variable]) -> Constraint[V] {
-  ...
-}
+// pub fn Constraint::from_matrix[V] (vars : Array[Variable]) -> Constraint[V] {
+//   ...
+// }
 
 ///|
-pub fn Constraint::to_matrix[V] (self : Constraint[V]) -> Matrix[V] {
-  ...
-}
+// pub fn Constraint::to_matrix[V] (self : Constraint[V]) -> Matrix[V] {
+//   ...
+// }
