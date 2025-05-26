@@ -11,6 +11,14 @@ pub impl Show for Variable with output(self, logger) -> Unit {
   logger.write_string(self.name)
 }
 
+pub impl One for Variable with one () -> Variable {
+  {
+    name : "",
+    low_bound : @double.min_value,
+    up_bound :  @double.max_value
+  }
+}
+
 pub impl Compare for Variable with compare(self, other) -> Int{
   if self.name == other.name{
     1

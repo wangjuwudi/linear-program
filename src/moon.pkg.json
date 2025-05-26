@@ -1,12 +1,12 @@
 {
     "import": [
-      // {
-      //   "path": "Luna-Flow/luna-utils",
-      //   "alias": "lu"
-      // },
       {
         "path": "Luna-Flow/luna-generic",
         "alias": "lg"
+      },
+      {
+        "path": "Luna-Flow/linear-algebra",
+        "alias": "al"
       }
     ]
 }

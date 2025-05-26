@@ -11,10 +11,10 @@ pub impl[V : Show + Eq + Semiring] Show for Constraint[V] with to_string (
 ) -> String {
   let mut res = ""
   for x in self.eq_poly {
-    res = x.0.to_string() + " = " + x.1.to_string() + "//n      "
+    res = x.0.to_string() + " = " + x.1.to_string() + "      "
   } 
   for x in self.ineq_poly {
-    res = res + x.0.to_string() + " \{x.1} " + x.2.to_string() + "//n      "
+    res = res + x.0.to_string() + " \{x.1} " + x.2.to_string() + "      "
   }
   "s.t.  " + res
 }

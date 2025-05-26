@@ -52,8 +52,11 @@ pub fn Poly::new[V] () -> Poly[V] {
 pub fn Poly::from_var_array[V : Eq + Compare + Semiring] (arr : Array[V], vars : Array[Variable]) -> Poly[V] {
   let res = Poly::new()
   for index, x in arr {
-    if x != V::zero() {
+    if index < arr.length() && x != V::zero() {
       res._.add(vars[index], x)
+    }
+    if index >= arr.length() {
+      res._.add(Variable::one(), x)
     }
   }
   res
@@ -81,4 +84,8 @@ pub fn Poly::copy[V: Eq + Semiring + Compare + Zero] (self : Poly[V]) -> Poly[V]
     }
   )
   m
+}
+
+test "add_term" {
+
 }
