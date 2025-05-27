@@ -43,6 +43,33 @@ pub impl[V: Eq + Semiring + Compare + Zero + Neg] Neg for Poly[V] with op_neg (
   m
 }
 
+test "Neg" {
+  let x1 :Variable = {
+    name : "x1",
+    low_bound : -1.0,
+    up_bound: 1.0
+  }
+  let x2 :Variable = {
+    name : "x2",
+    low_bound : -1.0,
+    up_bound: 1.0
+  }
+  let x3 :Variable = {
+    name : "x3",
+    low_bound : -1.0,
+    up_bound: 1.0
+  }
+ 
+  let poly = Poly::new();
+  poly.add_term_inplace(x1, 3.5)
+  poly.add_term_inplace(x2, 1.5)
+  poly.add_term_inplace(x3, -2)
+
+  println(poly)
+  println(-poly)
+  println(-(-poly))
+}
+
 
 pub fn Poly::new[V] () -> Poly[V] {
   @sorted_map.new()
@@ -61,6 +88,15 @@ pub fn Poly::from_var_array[V : Eq + Compare + Semiring] (arr : Array[V], vars :
   }
   res
 }
+
+pub fn Poly::to_Array[V] (self : Poly[V]) -> Array[V] {
+  let res : Array[V] = []
+  for x in self._ {
+    res.append([x.1])
+  }
+  res
+}
+
 pub fn Poly::add_term_inplace[V: Eq + Semiring + Compare + Zero] (
   self : Poly[V],
   var : Variable, 
@@ -84,8 +120,4 @@ pub fn Poly::copy[V: Eq + Semiring + Compare + Zero] (self : Poly[V]) -> Poly[V]
     }
   )
   m
-}
-
-test "add_term" {
-
 }

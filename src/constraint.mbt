@@ -11,10 +11,10 @@ pub impl[V : Show + Eq + Semiring] Show for Constraint[V] with to_string (
 ) -> String {
   let mut res = ""
   for x in self.eq_poly {
-    res = x.0.to_string() + " = " + x.1.to_string() + "      "
+    res += x.0.to_string() + " = " + x.1.to_string() + "    "
   } 
   for x in self.ineq_poly {
-    res = res + x.0.to_string() + " \{x.1} " + x.2.to_string() + "      "
+    res += res + x.0.to_string() + " \{x.1} " + x.2.to_string() + "    "
   }
   "s.t.  " + res
 }
@@ -58,6 +58,39 @@ pub fn Constraint::change_ineqpoly[V] (self : Constraint[V], index : Int, poly :
   self.ineq_poly[index - 1] = (poly, s, b)
 }
 
+test "add_eqpoly" {
+  let x1 :Variable = {
+    name : "x1",
+    low_bound : -1.0,
+    up_bound: 1.0
+  }
+  let x2 :Variable = {
+    name : "x2",
+    low_bound : -1.0,
+    up_bound: 1.0
+  }
+  let x3 :Variable = {
+    name : "x3",
+    low_bound : -1.0,
+    up_bound: 1.0
+  }
+  let con = Constraint::new()
+  let poly = Poly::new();
+  poly.add_term_inplace(x1, 3.5)
+  poly.add_term_inplace(x2, 1.5)
+  poly.add_term_inplace(x3, -2)
+
+  con.add_eqpoly(poly, 3.7)
+  println(con)
+
+  let poly = Poly::new();
+  poly.add_term_inplace(x1, 3.5)
+  poly.add_term_inplace(x2, 1.5)
+  poly.add_term_inplace(x3, -2)
+  con.add_eqpoly(poly, 3.9)
+  println(con)
+}
+
 ///|
 pub fn Constraint::from_array[V : Eq + Compare + Semiring] (
   eqarray : Array[(Array[V], V)], 
@@ -81,6 +114,18 @@ pub fn Constraint::from_array[V : Eq + Compare + Semiring] (
   }
   c
 } 
+
+///|
+/// before use this function.Please make sure This Lp have been transformed to starand
+pub fn Constraint::to_Array[V](self : Constraint[V]) -> Array[Array[V]]{
+  let res : Array[Array[V]]= []
+  for x in self.eq_poly{
+    let temp_array = x.0.to_Array()
+    temp_array.append([x.1])
+    res.append([temp_array])
+  }
+  res
+}
 
 ///|
 // pub fn Constraint::from_matrix[V] (vars : Array[Variable]) -> Constraint[V] {

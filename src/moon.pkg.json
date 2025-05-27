@@ -3,10 +3,10 @@
       {
         "path": "Luna-Flow/luna-generic",
         "alias": "lg"
-      },
-      {
-        "path": "Luna-Flow/linear-algebra",
-        "alias": "al"
       }
+      // {
+      //   "path": "Luna-Flow/linear-algebra",
+      //   "alias": "al"
+      // }
     ]
 }

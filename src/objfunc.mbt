@@ -74,11 +74,21 @@ test "show" {
     low_bound : -1.0,
     up_bound: 1.0
   }
-  println(x1);
+  let x2 :Variable = {
+    name : "x2",
+    low_bound : -1.0,
+    up_bound: 1.0
+  }
+  let x3 :Variable = {
+    name : "x3",
+    low_bound : -1.0,
+    up_bound: 1.0
+  }
+ 
   let poly = Poly::new();
   poly.add_term_inplace(x1, 3.5)
-  println(poly)
-
+  poly.add_term_inplace(x2, 1.5)
+  poly.add_term_inplace(x3, -2)
   let obj_func = Obj_func::new("max").set_poly(poly)
   
   println(obj_func)

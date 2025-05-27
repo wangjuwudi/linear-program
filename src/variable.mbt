@@ -2,7 +2,7 @@ struct Variable {
   name : String
   low_bound : Double
   up_bound : Double
-}derive(Eq)
+}derive()
 
 pub impl Show for Variable with to_string(self) -> String {
   self.name
@@ -21,9 +21,17 @@ pub impl One for Variable with one () -> Variable {
 
 pub impl Compare for Variable with compare(self, other) -> Int{
   if self.name == other.name{
-    1
-  }else{
     0
+  }else{
+    1
+  }
+}
+
+pub impl Eq for Variable with op_equal(self, other) -> Bool{
+  if self.name == other.name{
+    true
+  }else{
+    false
   }
 }
 
