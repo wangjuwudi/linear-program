@@ -11,14 +11,15 @@ pub impl[V : Show + Eq + Semiring] Show for Constraint[V] with to_string (
 ) -> String {
   let mut res = ""
   for x in self.eq_poly {
-    res += x.0.to_string() + " = " + x.1.to_string() + "    "
+    res += x.0.to_string() + " = " + x.1.to_string() + "\n     "
   } 
   for x in self.ineq_poly {
-    res += res + x.0.to_string() + " \{x.1} " + x.2.to_string() + "    "
+    res += x.0.to_string() + " \{x.1} " + x.2.to_string() + "\n    "
   }
-  "s.t.  " + res
+  "s.t. " + res
 }
 
+///|
 pub impl[V : Show + Eq + Semiring] Show for Constraint[V] with output (
   self,
   l
@@ -37,7 +38,7 @@ pub fn Constraint::new[V]() -> Constraint[V] {
   }
 }
 
-
+///|
 pub fn Constraint::add_eqpoly[V](self : Constraint[V], poly : Poly[V], b : V) -> Unit {
   self.eq_poly.append([(poly, b)])
 }
@@ -48,11 +49,13 @@ pub fn Constraint::add_ineqpoly[V] (self : Constraint[V], poly : Poly[V], s : St
   self.ineq_poly.append([(poly, s, b)])
 }
 
+///|
 pub fn Constraint::change_eqpoly[V] (self : Constraint[V], index : Int, poly : Poly[V], b : V) -> Unit {
   guard (index > 0 && index < self.eq_poly.capacity()) else {abort("Error, index is out of bound")}
   self.eq_poly[index - 1] = (poly, b)
 }
 
+///|
 pub fn Constraint::change_ineqpoly[V] (self : Constraint[V], index : Int, poly : Poly[V], s : String, b : V) -> Unit {
   guard (index > 0 && index < self.eq_poly.capacity()) else {abort("Error, index is out of bound")}
   self.ineq_poly[index - 1] = (poly, s, b)
@@ -117,10 +120,13 @@ pub fn Constraint::from_array[V : Eq + Compare + Semiring] (
 
 ///|
 /// before use this function.Please make sure This Lp have been transformed to starand
-pub fn Constraint::to_Array[V](self : Constraint[V]) -> Array[Array[V]]{
+pub fn Constraint::to_Matrix[V: Zero](
+  self : Constraint[V],
+  vars : Array[Variable]
+) -> Array[Array[V]]{
   let res : Array[Array[V]]= []
   for x in self.eq_poly{
-    let temp_array = x.0.to_Array()
+    let temp_array = x.0.to_vector(vars)
     temp_array.append([x.1])
     res.append([temp_array])
   }
@@ -132,7 +138,3 @@ pub fn Constraint::to_Array[V](self : Constraint[V]) -> Array[Array[V]]{
 //   ...
 // }
 
-///|
-// pub fn Constraint::to_matrix[V] (self : Constraint[V]) -> Matrix[V] {
-//   ...
-// }

@@ -4,16 +4,18 @@ struct Lp[V] {
   constraint : Constraint[V]
 }
 
+///|
 pub impl[V : Show + Eq + Semiring] Show for Lp[V] with to_string (
   self
 ) -> String {
-  let mut s = self.obj_func.to_string() + "   " + self.constraint.to_string()
+  let mut s = self.obj_func.to_string() + "\n" + self.constraint.to_string()
   for x in self.vars {
     s = s + " " + x.show_all()
   }
-  s
+  s + "\n"
 }
 
+///|
 pub impl[V : Show + Eq + Semiring] Show for Lp[V] with output (
   self,
   l
@@ -22,7 +24,9 @@ pub impl[V : Show + Eq + Semiring] Show for Lp[V] with output (
 }
 
 ///|
-/// 
+///  s ; choose 'min' or 'max'
+/// poly ; for Example Poly::from_var_array( [1.0, 2.0, 3.0], arr)
+/// var ; the array contains all variables about this LP
 pub fn Lp::new[V] (s : String, poly : Poly[V], var : Array[Variable]) -> Lp[V] {
   {
     vars : var,
@@ -99,45 +103,73 @@ pub fn Lp::to_standard[V: Eq + Semiring + Compare + Neg + One + Show] (self : Lp
 }
 
 ///|
-pub fn Lp::to_Matrix[V](self : Lp[V]) -> Array[Array[V]] {
-  
-[]
+/// before use this function, Please make sure this LP have been standard
+pub fn Lp::to_Matrix[V: Zero](self : Lp[V]) -> Array[Array[V]] {
+  let res : Array[Array[V]] = []
+  let var_num = self.vars.length()
+  res.append([self.obj_func.to_vector(var_num)])
+  res.append(self.constraint.to_Matrix(self.vars))
+  res
 }
+
+// ///|
+// pub fn Lp::get_b_vector[V: Zero] (
+//   self : Array[Array[V]]
+// ) -> Array[V] {
+//   let res :Array[V] = []
+//   let row_num = self[0].length()
+//   for arr in self {
+//     res.append([arr[row_num - 1]])
+//   } 
+//   res
+// }
+
+// ///|
+// pub fn Lp::get_c_vector[V: Zero] (
+//   self : Array[Array[V]]
+// ) -> Array[V] {
+//   let row_num = self[0].length()
+//   self[0][0:row_num-1].to_array()
+// }
+
 
 
 test "show" {
-  //定义变量
+  //Define Vars
+  //Variable::new(name, lowbound, upbound)
   let arr = [
     Variable::new("x1", 0.0, 100.0),
     Variable::new("x2", 0.0, 100.0),
     Variable::new("x3", 0.0, 100.0)
   ]
 
-  //目标函数
+  //Define Object function
   let obj_poly = Poly::from_var_array(
     [1.0, 2.0, 3.0],
     arr
   )
 
-  //等式约束
+  //Define equal constraint
+  // (poly, b-value)
   let eqarr = [
     ([2.0, 2.0, 3.0], 100.0)
   ]
-  //不等式约束
+  //Define inequal constraint
+  // (poly, labal, b-value)
   let ineqarr = [
-    ([2.5, 3.3, 4.7], ">=", 0.0),
+    ([2.5, 0.0, 4.7], ">=", 0.0),
     ([-1.7, 2.5, 12], "<=", 0.0)
   ]
 
-  // PL问题定义
-  // 1. 定义所有使用到的变量 
-  // 2. 定义Lp的类型: "min" 或者 "max"
-  // 3. 添加Lp的 目标函数、约束条件
-  // 4. 标准化Lp问题：
-    // 
+  //Define Liner Program
   let lp = Lp::new("max", obj_poly, arr)
   let lp2 = lp.cons_from_Array(eqarr, ineqarr)
-  
+  let lp3 = lp2.to_standard()
+  // initial LP
   println(lp2)
-  println(lp2.to_standard())
+  // transform to standard
+  println(lp3)
+  // transform to Matrix
+  let array = lp3.to_Matrix()
+  println(array)
 }

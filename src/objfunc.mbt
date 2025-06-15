@@ -9,7 +9,7 @@ struct Obj_func[V] {
 }derive()
 
 
-
+///|
 pub impl[V : Eq + Show + Semiring] Show for Obj_func[V] with to_string (
   self
 ) -> String {
@@ -17,9 +17,9 @@ pub impl[V : Eq + Show + Semiring] Show for Obj_func[V] with to_string (
     Minimize => "min  " + self.obj_poly.to_string()
     Maximize => "max  " + self.obj_poly.to_string()
   }
-  
 }
 
+///|
 pub impl[V : Eq + Show + Semiring] Show for Obj_func[V] with output(
   self,
   l
@@ -27,7 +27,7 @@ pub impl[V : Eq + Show + Semiring] Show for Obj_func[V] with output(
   l.write_string(self.to_string())
 }
 
-
+///|
 pub fn Obj_func::new[V] (s : String) -> Obj_func[V] {
   {
     sense : match s {
@@ -39,6 +39,7 @@ pub fn Obj_func::new[V] (s : String) -> Obj_func[V] {
   }
 }
 
+///|
 pub fn Obj_func::set_poly[V] (self : Obj_func[V], poly : Poly[V]) -> Obj_func[V] {
   {
     sense : self.sense,
@@ -46,6 +47,7 @@ pub fn Obj_func::set_poly[V] (self : Obj_func[V], poly : Poly[V]) -> Obj_func[V]
   }
 }
 
+///|
 pub fn Obj_func::add_term_inplace[V: Eq + Semiring + Compare + Zero] (
   self : Obj_func[V],
   var : Variable, 
@@ -54,6 +56,7 @@ pub fn Obj_func::add_term_inplace[V: Eq + Semiring + Compare + Zero] (
   self.obj_poly.add_term_inplace(var, coeff)
 }
 
+///|
 pub fn Obj_func::to_min[V: Eq + Semiring + Compare + Zero + Neg](
   self : Obj_func[V]
 ) -> Obj_func[V] {
@@ -66,6 +69,17 @@ pub fn Obj_func::to_min[V: Eq + Semiring + Compare + Zero + Neg](
   }
 }
 
+///|
+pub fn Obj_func::to_vector[V : Zero] (
+  self : Obj_func[V],
+  var_num : Int
+) -> Array[V] {
+  let res = self.obj_poly.to_Array()
+  while res.length() <= var_num {
+    res.append([V::zero()])
+  }
+  res
+}
 
 
 test "show" {

@@ -1,7 +1,6 @@
 type Poly[V] @sorted_map.T[Variable, V] derive(Eq)
 
-
-
+///|
 pub impl[V : Eq + Show + Semiring + @lg.One] Show for Poly[V] with to_string (
   self
 ) -> String {
@@ -24,6 +23,7 @@ pub impl[V : Eq + Show + Semiring + @lg.One] Show for Poly[V] with to_string (
   s
 }
 
+///|
 pub impl[V : Eq + Show + Semiring + One] Show for Poly[V] with output(
   self,
   l
@@ -31,6 +31,7 @@ pub impl[V : Eq + Show + Semiring + One] Show for Poly[V] with output(
   l.write_string(self.to_string())
 }
 
+///|
 pub impl[V: Eq + Semiring + Compare + Zero + Neg] Neg for Poly[V] with op_neg (
   self : Poly[V]
 ) -> Poly[V] {
@@ -70,12 +71,12 @@ test "Neg" {
   println(-(-poly))
 }
 
-
+///|
 pub fn Poly::new[V] () -> Poly[V] {
   @sorted_map.new()
 }
 
-
+///|
 pub fn Poly::from_var_array[V : Eq + Compare + Semiring] (arr : Array[V], vars : Array[Variable]) -> Poly[V] {
   let res = Poly::new()
   for index, x in arr {
@@ -89,6 +90,7 @@ pub fn Poly::from_var_array[V : Eq + Compare + Semiring] (arr : Array[V], vars :
   res
 }
 
+///|
 pub fn Poly::to_Array[V] (self : Poly[V]) -> Array[V] {
   let res : Array[V] = []
   for x in self._ {
@@ -97,6 +99,21 @@ pub fn Poly::to_Array[V] (self : Poly[V]) -> Array[V] {
   res
 }
 
+///|
+pub fn Poly::to_vector[V : Zero] (self : Poly[V], vars : Array[Variable]) -> Array[V] {
+  let res : Array[V] = []
+  for var in vars {
+    res.append(
+      match self._.get(var) {
+        None => [V::zero()]
+        Some(x) => [x]
+      }
+    )
+  }
+  res
+}
+
+///|
 pub fn Poly::add_term_inplace[V: Eq + Semiring + Compare + Zero] (
   self : Poly[V],
   var : Variable, 
@@ -112,6 +129,7 @@ pub fn Poly::add_term_inplace[V: Eq + Semiring + Compare + Zero] (
   }
 }
 
+///|
 pub fn Poly::copy[V: Eq + Semiring + Compare + Zero] (self : Poly[V]) -> Poly[V] {
   let m = Poly::new()
   self._.each(
