@@ -29,7 +29,7 @@ pub impl[V : Show + Eq + Semiring] Show for Constraint[V] with output (
 
 ///|
 /// poly_number : the constraint number this PL question used
-pub fn Constraint::new[V]() -> Constraint[V] {
+pub fn[V] Constraint::new() -> Constraint[V] {
   let ep : Array[(Poly[V], V)] = []
   let iep : Array[(Poly[V], String, V)] = []
   {
@@ -39,24 +39,24 @@ pub fn Constraint::new[V]() -> Constraint[V] {
 }
 
 ///|
-pub fn Constraint::add_eqpoly[V](self : Constraint[V], poly : Poly[V], b : V) -> Unit {
+pub fn[V] Constraint::add_eqpoly(self : Constraint[V], poly : Poly[V], b : V) -> Unit {
   self.eq_poly.append([(poly, b)])
 }
 
 ///|
 /// s : '>=' or '<='
-pub fn Constraint::add_ineqpoly[V] (self : Constraint[V], poly : Poly[V], s : String, b : V) -> Unit {
+pub fn[V] Constraint::add_ineqpoly (self : Constraint[V], poly : Poly[V], s : String, b : V) -> Unit {
   self.ineq_poly.append([(poly, s, b)])
 }
 
 ///|
-pub fn Constraint::change_eqpoly[V] (self : Constraint[V], index : Int, poly : Poly[V], b : V) -> Unit {
+pub fn[V] Constraint::change_eqpoly (self : Constraint[V], index : Int, poly : Poly[V], b : V) -> Unit {
   guard (index > 0 && index < self.eq_poly.capacity()) else {abort("Error, index is out of bound")}
   self.eq_poly[index - 1] = (poly, b)
 }
 
 ///|
-pub fn Constraint::change_ineqpoly[V] (self : Constraint[V], index : Int, poly : Poly[V], s : String, b : V) -> Unit {
+pub fn[V] Constraint::change_ineqpoly (self : Constraint[V], index : Int, poly : Poly[V], s : String, b : V) -> Unit {
   guard (index > 0 && index < self.eq_poly.capacity()) else {abort("Error, index is out of bound")}
   self.ineq_poly[index - 1] = (poly, s, b)
 }
@@ -95,7 +95,7 @@ test "add_eqpoly" {
 }
 
 ///|
-pub fn Constraint::from_array[V : Eq + Compare + Semiring] (
+pub fn[V : Eq + Compare + Semiring] Constraint::from_array (
   eqarray : Array[(Array[V], V)], 
   ineqArray : Array[(Array[V], String, V)], 
   vars : Array[Variable]
@@ -120,7 +120,7 @@ pub fn Constraint::from_array[V : Eq + Compare + Semiring] (
 
 ///|
 /// before use this function.Please make sure This Lp have been transformed to starand
-pub fn Constraint::to_Matrix[V: Zero](
+pub fn[V: Zero] Constraint::to_Matrix(
   self : Constraint[V],
   vars : Array[Variable]
 ) -> Array[Array[V]]{

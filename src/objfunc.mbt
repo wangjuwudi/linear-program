@@ -28,7 +28,7 @@ pub impl[V : Eq + Show + Semiring] Show for Obj_func[V] with output(
 }
 
 ///|
-pub fn Obj_func::new[V] (s : String) -> Obj_func[V] {
+pub fn[V] Obj_func::new (s : String) -> Obj_func[V] {
   {
     sense : match s {
       "Min" | "Minimize" | "min" | "minimize" | "MIN" => {Minimize}
@@ -40,7 +40,7 @@ pub fn Obj_func::new[V] (s : String) -> Obj_func[V] {
 }
 
 ///|
-pub fn Obj_func::set_poly[V] (self : Obj_func[V], poly : Poly[V]) -> Obj_func[V] {
+pub fn[V] Obj_func::set_poly (self : Obj_func[V], poly : Poly[V]) -> Obj_func[V] {
   {
     sense : self.sense,
     obj_poly : poly
@@ -48,7 +48,7 @@ pub fn Obj_func::set_poly[V] (self : Obj_func[V], poly : Poly[V]) -> Obj_func[V]
 }
 
 ///|
-pub fn Obj_func::add_term_inplace[V: Eq + Semiring + Compare + Zero] (
+pub fn[V: Eq + Semiring + Compare + Zero] Obj_func::add_term_inplace (
   self : Obj_func[V],
   var : Variable, 
   coeff : V
@@ -57,7 +57,7 @@ pub fn Obj_func::add_term_inplace[V: Eq + Semiring + Compare + Zero] (
 }
 
 ///|
-pub fn Obj_func::to_min[V: Eq + Semiring + Compare + Zero + Neg](
+pub fn[V: Eq + Semiring + Compare + Zero + Neg] Obj_func::to_min(
   self : Obj_func[V]
 ) -> Obj_func[V] {
   match self.sense {
@@ -70,7 +70,7 @@ pub fn Obj_func::to_min[V: Eq + Semiring + Compare + Zero + Neg](
 }
 
 ///|
-pub fn Obj_func::to_vector[V : Zero] (
+pub fn[V : Zero] Obj_func::to_vector (
   self : Obj_func[V],
   var_num : Int
 ) -> Array[V] {

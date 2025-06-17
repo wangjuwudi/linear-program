@@ -72,12 +72,12 @@ test "Neg" {
 }
 
 ///|
-pub fn Poly::new[V] () -> Poly[V] {
+pub fn[V] Poly::new () -> Poly[V] {
   @sorted_map.new()
 }
 
 ///|
-pub fn Poly::from_var_array[V : Eq + Compare + Semiring] (arr : Array[V], vars : Array[Variable]) -> Poly[V] {
+pub fn[V : Eq + Compare + Semiring] Poly::from_var_array (arr : Array[V], vars : Array[Variable]) -> Poly[V] {
   let res = Poly::new()
   for index, x in arr {
     if index < arr.length() && x != V::zero() {
@@ -91,7 +91,7 @@ pub fn Poly::from_var_array[V : Eq + Compare + Semiring] (arr : Array[V], vars :
 }
 
 ///|
-pub fn Poly::to_Array[V] (self : Poly[V]) -> Array[V] {
+pub fn[V] Poly::to_Array (self : Poly[V]) -> Array[V] {
   let res : Array[V] = []
   for x in self._ {
     res.append([x.1])
@@ -100,7 +100,7 @@ pub fn Poly::to_Array[V] (self : Poly[V]) -> Array[V] {
 }
 
 ///|
-pub fn Poly::to_vector[V : Zero] (self : Poly[V], vars : Array[Variable]) -> Array[V] {
+pub fn[V : Zero] Poly::to_vector (self : Poly[V], vars : Array[Variable]) -> Array[V] {
   let res : Array[V] = []
   for var in vars {
     res.append(
@@ -114,7 +114,7 @@ pub fn Poly::to_vector[V : Zero] (self : Poly[V], vars : Array[Variable]) -> Arr
 }
 
 ///|
-pub fn Poly::add_term_inplace[V: Eq + Semiring + Compare + Zero] (
+pub fn[V: Eq + Semiring + Compare + Zero] Poly::add_term_inplace (
   self : Poly[V],
   var : Variable, 
   coeff : V
@@ -130,7 +130,7 @@ pub fn Poly::add_term_inplace[V: Eq + Semiring + Compare + Zero] (
 }
 
 ///|
-pub fn Poly::copy[V: Eq + Semiring + Compare + Zero] (self : Poly[V]) -> Poly[V] {
+pub fn[V: Eq + Semiring + Compare + Zero] Poly::copy (self : Poly[V]) -> Poly[V] {
   let m = Poly::new()
   self._.each(
     fn (var : Variable, coeff : V) -> Unit {
