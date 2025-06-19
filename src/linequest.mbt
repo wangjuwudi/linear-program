@@ -28,13 +28,12 @@ pub impl[V : Show + Eq + Semiring] Show for Lp[V] with output (
 ///  s ; choose 'min' or 'max'
 /// poly ; for Example Poly::from_var_array( [1.0, 2.0, 3.0], arr)
 /// var ; the array contains all variables about this LP
-pub fn [V : Zero] Lp::new(s : String, poly : Poly[V], var : Array[Variable]) -> Lp[V] {
-  let new_objfunc = Obj_func::new(s).set_poly(poly)
+pub fn [V : Zero] Lp::new(new_objfunc : Obj_func[V] , variable : Array[Variable]) -> Lp[V] {
   {
-    vars : var,
+    vars : variable,
     obj_func : new_objfunc,
     constraint : Constraint::new(),
-    matrix : Lp::get_Matrix(var, new_objfunc, Constraint::new())
+    matrix : Lp::get_Matrix(variable, new_objfunc, Constraint::new())
   }
 }
 
@@ -55,10 +54,10 @@ pub fn [V : Compare + Semiring + Zero] Lp::reset_obj_byarray (self : Lp[V], arr:
 /// the lable in ineq_array must be ">=" or "<="
 pub fn [V : Eq + Compare + Semiring] Lp::cons_from_Array (
   self : Lp[V], 
-  eq_array : Array[(Array[V],V)], 
-  ineq_array : Array[(Array[V], String, V)]
+  eq_array~ : Array[(Array[V],V)] = [], 
+  ineq_array~ : Array[(Array[V], String, V)] = []
 ) -> Lp[V] {
-  let new_constraint = Constraint::from_array(eq_array, ineq_array, self.vars)
+  let new_constraint = Constraint::from_array(eq_array = eq_array, ineq_array = ineq_array, self.vars)
   {
     vars : self.vars,
     obj_func : self.obj_func,
@@ -70,36 +69,101 @@ pub fn [V : Eq + Compare + Semiring] Lp::cons_from_Array (
 ///|
 /// transform Matrix to Linear-program standard model
 /// A: m×n 系数矩阵，b: m×1 右端项向量，c: n×1 目标函数系数向量
-// pub fn Lp::from_matrix[V: Eq + Compare + Semiring] (lp_matrix : Matrix[V], vars_matrix : Array[Variable], obj_type: String) -> Lp[V]{
-//   let var_num = vars_matrix.length()
-//   let lp_array = lp_matrix.to_array()
+pub fn[V: Eq + Compare + Semiring] Lp::from_matrix (
+  lp_matrix : Matrix[V], 
+  vars_for_matrix : Array[Variable], 
+  obj_type: String
+) -> Lp[V]{
+  let eq_array : Array[(Array[V], V)]= []
+  let row_num = lp_matrix.row()
+  let col_num = lp_matrix.col()
+  for i in 1..<row_num {
+    eq_array.append(
+      [(
+        lp_matrix.row_to_array(i)[:col_num-1].to_array(), 
+        lp_matrix[i][col_num-1]
+      )])
+  }
+  {
+    vars : vars_for_matrix,
+    obj_func : Obj_func::from_array(
+      obj_type, 
+      lp_matrix.row_to_array(0)[:col_num].to_array(), 
+      vars_for_matrix
+    ),
+    constraint : Constraint::from_array(eq_array = eq_array, vars_for_matrix),
+    matrix : lp_matrix
+  }
+}
 
-//   let obj_poly = Poly::from_var_array(
-//     ,
-//     vars_matrix
-//   )
-//   let new_objfunc = Obj_func::new(obj_type).set_poly(obj_poly)
-//   {
-//     vars : vars_matrix,
-//     obj_func : ,
-//     constraint : ,
-//     matrix : 
-//   }
-// }
+test "Lp_from_Matrix" {
+  let vars = [
+    Variable::new("x1", 0.0, @double.max_value),
+    Variable::new("x2", 0.0, @double.max_value),
+    Variable::new("x3", 0.0, @double.max_value),
+    Variable::new("x4", 0.0, @double.max_value),
+  ] 
+  let matrix = Matrix::from_2d_array(
+    [
+      [1,2,3,4,0],
+      [4,5,0,5,1],
+      [1,-4,5,1,0],
+      [0,3,8,1,2]
+    ]
+  )
 
-///|
-pub fn[V] Lp::get_coeff_matrix (lp_matrix : Matrix[V]) -> Matrix[V] {
-  ...
+  let lp = Lp::from_matrix(matrix, vars, "min")
+
+  println(lp)
 }
 
 ///|
-pub fn[V] Lp::get_objfunc_matrix(lp_matrix : Matrix[V]) -> Array[V] {
-  lp_matrix.row_to_array(0)
+pub fn[V : Zero] Lp::get_coeff_matrix (self : Lp[V]) -> Matrix[V] {
+  Matrix::make(
+    self.matrix.row() - 1, 
+    self.matrix.col() - 1,
+    fn (col_index : Int, row_index : Int) -> V {
+      self.matrix[col_index + 1][row_index]
+    }
+  )  
 }
 
 ///|
-pub fn[V] Lp::get_b_vector(lp_matrix : Matrix[V]) -> Array[V] {
-  lp_matrix.col_to_array(0)
+pub fn[V] Lp::get_objfunc_matrix(self : Lp[V]) -> Array[V] {
+  self.matrix.row_to_array(0)[:self.matrix.col() - 1].to_array()
+}
+
+///|
+pub fn[V] Lp::get_b_vector(self : Lp[V]) -> Array[V] {
+  self.matrix.col_to_array(self.matrix.col() - 1)[1:].to_array()
+}
+ 
+test "get A,c,b" {
+  let vars = [
+    Variable::new("x1", 0.0, @double.max_value),
+    Variable::new("x2", 0.0, @double.max_value),
+    Variable::new("x3", 0.0, @double.max_value),
+    Variable::new("x4", 0.0, @double.max_value),
+    Variable::new("x5", 0.0, @double.max_value),
+  ]
+
+  let obj_func = Obj_func::from_array(
+    "min",
+    [1,2,3,4,5],
+    vars
+  )
+
+  let eq_con = [
+    ([1,2,3,0,5], 0),
+    ([1,7,0,4,3], 0)
+  ]
+
+  let lp = Lp::new(obj_func, vars).cons_from_Array(eq_array = eq_con)
+
+  println(lp.matrix)
+  println(lp.get_coeff_matrix())
+  println(lp.get_objfunc_matrix())
+  println(lp.get_b_vector())
 }
 
 ///|
@@ -117,17 +181,17 @@ pub fn [V: Eq + Semiring + Compare + Neg] Lp::to_standard (self : Lp[V]) -> Lp[V
   self.constraint.ineq_poly.each(
     fn ( x ) -> Unit {
       let (poly, s, coeff) = x
-      let var = Variable::new("y" + count.to_string(), 0, @double.max_value)
+      let variable = Variable::new("y" + count.to_string(), 0, @double.max_value)
       count += 1
-      new_vars.append([var])
+      new_vars.append([variable])
 
       if s == ">=" {
         let temp_poly = -poly
-        temp_poly.add_term_inplace(var, V::one())
+        temp_poly.add_term_inplace(variable, V::one())
         new_cons.add_eqpoly(temp_poly, -coeff)
       }else{
         let temp_poly = poly.copy()
-        temp_poly.add_term_inplace(var, V::one())
+        temp_poly.add_term_inplace(variable, V::one())
         new_cons.add_eqpoly(temp_poly, coeff)
       }
     }
@@ -164,7 +228,8 @@ test "show" {
   ]
 
   //Define Object function
-  let obj_poly = Poly::from_var_array(
+  let obj_func = Obj_func::from_array(
+    "max",
     [1.0, 2.0, 3.0],
     arr
   )
@@ -182,18 +247,16 @@ test "show" {
   ]
 
   //Define Liner Program
-  let lp = Lp::new("max", obj_poly, arr)
-  let lp2 = lp.cons_from_Array(eqarr, ineqarr)
+  let lp = Lp::new(obj_func, arr)
+  let lp2 = lp.cons_from_Array(eq_array = eqarr, ineq_array = ineqarr)
   let lp3 = lp2.to_standard()
-  // initial LP
+
   println(lp2)
-  // transform to standard
   println(lp3)
-  // transform to Matrix
   println(lp3.matrix)
 }
 
 ///|
-pub fn[V] Lp::solve_LP_bySimplex(self : Lp[V]) -> (Array[V],Array[Variable]){
+pub fn[V] Lp::solve_LP_bySimplex(self : Lp[V]) -> (Array[V], Array[Variable]){
 ...
 }

@@ -96,18 +96,18 @@ test "add_eqpoly" {
 
 ///|
 pub fn[V : Eq + Compare + Semiring] Constraint::from_array (
-  eqarray : Array[(Array[V], V)], 
-  ineqArray : Array[(Array[V], String, V)], 
+  eq_array~ : Array[(Array[V], V)] = [], 
+  ineq_array~ : Array[(Array[V], String, V)] = [], 
   vars : Array[Variable]
 ) -> Constraint[V] {
   let c = Constraint::new()
-  for eq in eqarray {
+  for eq in eq_array {
     c.add_eqpoly(
       Poly::from_var_array(eq.0, vars), 
       eq.1
     )
   }
-  for ineq in ineqArray {
+  for ineq in ineq_array {
     guard ineq.1 == ">=" || ineq.1 == "<=" else {abort("there is not '>=' or '<=' in ineq Array")}
     c.add_ineqpoly(
       Poly::from_var_array(ineq.0, vars),

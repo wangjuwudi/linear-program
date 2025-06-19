@@ -6,17 +6,17 @@ pub impl[V : Eq + Show + Semiring + @lg.One] Show for Poly[V] with to_string (
 ) -> String {
   let mut s = ""
   let mut fst = true
-  self._.each(fn (var, coff) -> Unit {
+  self.inner().each(fn (variable, coff) -> Unit {
     if not(fst) {
       s += " + "
     }
     if coff == V::one(){
-      s += var.to_string()
+      s += variable.to_string()
     }else if coff == V::zero() {
       s += ""
     }else {
       s += coff.to_string()
-      s += var.to_string()
+      s += variable.to_string()
     } 
     fst = false
   })
@@ -36,9 +36,9 @@ pub impl[V: Eq + Semiring + Compare + Zero + Neg] Neg for Poly[V] with op_neg (
   self : Poly[V]
 ) -> Poly[V] {
   let m = Poly::new()
-  self._.each(
-    fn (var : Variable, coeff : V) -> Unit {
-      m.add_term_inplace(var, -coeff)
+  self.inner().each(
+    fn (variable : Variable, coeff : V) -> Unit {
+      m.add_term_inplace(variable, -coeff)
     }
   )
   m
@@ -81,10 +81,10 @@ pub fn[V : Eq + Compare + Semiring] Poly::from_var_array (arr : Array[V], vars :
   let res = Poly::new()
   for index, x in arr {
     if index < arr.length() && x != V::zero() {
-      res._.add(vars[index], x)
+      res.inner().add(vars[index], x)
     }
     if index >= arr.length() {
-      res._.add(Variable::one(), x)
+      res.inner().add(Variable::one(), x)
     }
   }
   res
@@ -93,7 +93,7 @@ pub fn[V : Eq + Compare + Semiring] Poly::from_var_array (arr : Array[V], vars :
 ///|
 pub fn[V] Poly::to_Array (self : Poly[V]) -> Array[V] {
   let res : Array[V] = []
-  for x in self._ {
+  for x in self.inner() {
     res.append([x.1])
   }
   res
@@ -102,9 +102,9 @@ pub fn[V] Poly::to_Array (self : Poly[V]) -> Array[V] {
 ///|
 pub fn[V : Zero] Poly::to_vector (self : Poly[V], vars : Array[Variable]) -> Array[V] {
   let res : Array[V] = []
-  for var in vars {
+  for variable in vars {
     res.append(
-      match self._.get(var) {
+      match self.inner().get(variable) {
         None => [V::zero()]
         Some(x) => [x]
       }
@@ -116,25 +116,25 @@ pub fn[V : Zero] Poly::to_vector (self : Poly[V], vars : Array[Variable]) -> Arr
 ///|
 pub fn[V: Eq + Semiring + Compare + Zero] Poly::add_term_inplace (
   self : Poly[V],
-  var : Variable, 
+  variable : Variable, 
   coeff : V
 ) -> Unit {
   guard coeff != V::zero() else { return }
-  if self._.get(var) is None {
-    self._.add(var, coeff)
+  if self.inner().get(variable) is None {
+    self.inner().add(variable, coeff)
   }else{
-    let new_coeff = self._.get(var).unwrap() + coeff
-    guard new_coeff != V::zero() else { self._.remove(var) }
-    self._[var] = new_coeff  
+    let new_coeff = self.inner().get(variable).unwrap() + coeff
+    guard new_coeff != V::zero() else { self.inner().remove(variable) }
+    self.inner()[variable] = new_coeff  
   }
 }
 
 ///|
 pub fn[V: Eq + Semiring + Compare + Zero] Poly::copy (self : Poly[V]) -> Poly[V] {
   let m = Poly::new()
-  self._.each(
-    fn (var : Variable, coeff : V) -> Unit {
-      m.add_term_inplace(var, coeff)
+  self.inner().each(
+    fn (variable : Variable, coeff : V) -> Unit {
+      m.add_term_inplace(variable, coeff)
     }
   )
   m

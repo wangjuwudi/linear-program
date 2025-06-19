@@ -50,10 +50,19 @@ pub fn[V] Obj_func::set_poly (self : Obj_func[V], poly : Poly[V]) -> Obj_func[V]
 ///|
 pub fn[V: Eq + Semiring + Compare + Zero] Obj_func::add_term_inplace (
   self : Obj_func[V],
-  var : Variable, 
+  variable : Variable, 
   coeff : V
 ) -> Unit {
-  self.obj_poly.add_term_inplace(var, coeff)
+  self.obj_poly.add_term_inplace(variable, coeff)
+}
+
+///|
+pub fn[V : Eq + Compare + Semiring] Obj_func::from_array(
+  obj_type : String,
+  arr : Array[V],
+  vars : Array[Variable]
+) -> Obj_func[V] {
+  Obj_func::new(obj_type).set_poly(Poly::from_var_array(arr,vars))
 }
 
 ///|
