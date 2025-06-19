@@ -25,9 +25,7 @@ pub impl[V : Show + Eq + Semiring] Show for Lp[V] with output (
 }
 
 ///|
-///  s ; choose 'min' or 'max'
-/// poly ; for Example Poly::from_var_array( [1.0, 2.0, 3.0], arr)
-/// var ; the array contains all variables about this LP
+/// the variable name can't be [y1,y2,...] or [z1,z2,...]
 pub fn [V : Zero] Lp::new(new_objfunc : Obj_func[V] , variable : Array[Variable]) -> Lp[V] {
   {
     vars : variable,
@@ -68,7 +66,6 @@ pub fn [V : Eq + Compare + Semiring] Lp::cons_from_Array (
 
 ///|
 /// transform Matrix to Linear-program standard model
-/// A: m×n 系数矩阵，b: m×1 右端项向量，c: n×1 目标函数系数向量
 pub fn[V: Eq + Compare + Semiring] Lp::from_matrix (
   lp_matrix : Matrix[V], 
   vars_for_matrix : Array[Variable], 
@@ -111,9 +108,7 @@ test "Lp_from_Matrix" {
       [0,3,8,1,2]
     ]
   )
-
   let lp = Lp::from_matrix(matrix, vars, "min")
-
   println(lp)
 }
 
@@ -168,31 +163,43 @@ test "get A,c,b" {
 
 ///|
 /// transform Lp from (Ax "= <= >=" b) to (Ax = b)
-/// this function add some Variable to Lp, they are 剩余变量 and 松弛变量
+/// this function add some Variable to Lp, they are artificial variable、remainder,relaxation variable
 pub fn [V: Eq + Semiring + Compare + Neg] Lp::to_standard (self : Lp[V]) -> Lp[V] {
   let new_objfunc = self.obj_func.to_min()
   let new_vars = self.vars.copy()
-  let new_cons = {
-    eq_poly : self.constraint.eq_poly.copy(),
+  let new_cons : Constraint[V] = {
+    eq_poly : [],
     ineq_poly : []
   }
-  
+  // add artificial variable for eq_constraint
   let mut count = 1
+  self.constraint.eq_poly.each(
+    fn (x) -> Unit {
+      let (poly, b) = x
+      let variable = Variable::new("z" + count.to_string(), 0, @double.max_value)
+      count += 1
+      new_vars.append([variable])
+      let temp_poly = poly.copy()
+      temp_poly.add_term_inplace(variable, V::one())
+      new_cons.add_eqpoly(temp_poly, b)
+    }
+  )
+  //add remainder,relaxation variable for ineq_constraint
+  count = 1
   self.constraint.ineq_poly.each(
     fn ( x ) -> Unit {
-      let (poly, s, coeff) = x
+      let (poly, s, b) = x
       let variable = Variable::new("y" + count.to_string(), 0, @double.max_value)
       count += 1
       new_vars.append([variable])
-
       if s == ">=" {
         let temp_poly = -poly
         temp_poly.add_term_inplace(variable, V::one())
-        new_cons.add_eqpoly(temp_poly, -coeff)
+        new_cons.add_eqpoly(temp_poly, -b)
       }else{
         let temp_poly = poly.copy()
         temp_poly.add_term_inplace(variable, V::one())
-        new_cons.add_eqpoly(temp_poly, coeff)
+        new_cons.add_eqpoly(temp_poly, b)
       }
     }
   )
@@ -214,7 +221,7 @@ fn[V: Zero] Lp::get_Matrix(
   let res : Array[Array[V]] = []
   let var_num = vars.length()
   res.append([obj_func.to_vector(var_num)])
-  res.append(constraint.to_Matrix(vars))
+  res.append(constraint.to_matrix(vars))
   Matrix::from_2d_array(res)
 }
 
@@ -226,14 +233,12 @@ test "show" {
     Variable::new("x2", 0.0, 100.0),
     Variable::new("x3", 0.0, 100.0)
   ]
-
   //Define Object function
   let obj_func = Obj_func::from_array(
     "max",
     [1.0, 2.0, 3.0],
     arr
   )
-
   //Define equal constraint
   // (poly, b-value)
   let eqarr = [
@@ -245,17 +250,17 @@ test "show" {
     ([2.5, 0.0, 4.7], ">=", 0.0),
     ([-1.7, 2.5, 12], "<=", 0.0)
   ]
-
   //Define Liner Program
-  let lp = Lp::new(obj_func, arr)
-  let lp2 = lp.cons_from_Array(eq_array = eqarr, ineq_array = ineqarr)
+  let lp2 = Lp::new(obj_func, arr).cons_from_Array(eq_array = eqarr, ineq_array = ineqarr)
   let lp3 = lp2.to_standard()
-
   println(lp2)
+  println(lp2.matrix)
   println(lp3)
   println(lp3.matrix)
 }
 
+
+// *** Solve Linear Program *** //
 ///|
 pub fn[V] Lp::solve_LP_bySimplex(self : Lp[V]) -> (Array[V], Array[Variable]){
 ...

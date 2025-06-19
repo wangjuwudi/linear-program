@@ -120,7 +120,7 @@ pub fn[V : Eq + Compare + Semiring] Constraint::from_array (
 
 ///|
 /// before use this function.Please make sure This Lp have been transformed to starand
-pub fn[V: Zero] Constraint::to_Matrix(
+pub fn[V: Zero] Constraint::to_matrix(
   self : Constraint[V],
   vars : Array[Variable]
 ) -> Array[Array[V]]{
@@ -133,8 +133,4 @@ pub fn[V: Zero] Constraint::to_Matrix(
   res
 }
 
-///|
-// pub fn Constraint::from_matrix[V] (vars : Array[Variable]) -> Constraint[V] {
-//   ...
-// }
 
