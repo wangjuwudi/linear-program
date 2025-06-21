@@ -164,24 +164,24 @@ test "get A,c,b" {
 ///|
 /// transform Lp from (Ax "= <= >=" b) to (Ax = b)
 /// this function add some Variable to Lp, they are artificial variable、remainder,relaxation variable
-pub fn [V: Eq + Semiring + Compare + Neg] Lp::to_standard (self : Lp[V]) -> Lp[V] {
+/// also make sure all RHS is > 0
+pub fn [V: Eq + Semiring + Compare + Neg + Zero] Lp::to_standard (self : Lp[V]) -> Lp[V] {
   let new_objfunc = self.obj_func.to_min()
   let new_vars = self.vars.copy()
   let new_cons : Constraint[V] = {
     eq_poly : [],
     ineq_poly : []
   }
-  // add artificial variable for eq_constraint
+
   let mut count = 1
   self.constraint.eq_poly.each(
     fn (x) -> Unit {
       let (poly, b) = x
-      let variable = Variable::new("z" + count.to_string(), 0, @double.max_value)
-      count += 1
-      new_vars.append([variable])
-      let temp_poly = poly.copy()
-      temp_poly.add_term_inplace(variable, V::one())
-      new_cons.add_eqpoly(temp_poly, b)
+      if (b < V::zero()) {
+        new_cons.add_eqpoly(-poly, -b)
+      }else {
+        new_cons.add_eqpoly(poly, b)
+      }
     }
   )
   //add remainder,relaxation variable for ineq_constraint
@@ -193,13 +193,25 @@ pub fn [V: Eq + Semiring + Compare + Neg] Lp::to_standard (self : Lp[V]) -> Lp[V
       count += 1
       new_vars.append([variable])
       if s == ">=" {
-        let temp_poly = -poly
-        temp_poly.add_term_inplace(variable, V::one())
-        new_cons.add_eqpoly(temp_poly, -b)
+        if (b <= V::zero()) {
+          let temp_poly = -poly
+          temp_poly.add_term_inplace(variable, V::one())
+          new_cons.add_eqpoly(temp_poly, -b)
+        }else {
+          let temp_poly = poly.copy()
+          temp_poly.add_term_inplace(variable, -V::one())
+          new_cons.add_eqpoly(temp_poly, b)
+        }
       }else{
-        let temp_poly = poly.copy()
-        temp_poly.add_term_inplace(variable, V::one())
-        new_cons.add_eqpoly(temp_poly, b)
+        if (b >= V::zero()){
+          let temp_poly = poly.copy()
+          temp_poly.add_term_inplace(variable, V::one())
+          new_cons.add_eqpoly(temp_poly, b)
+        }else {
+          let temp_poly = -poly
+          temp_poly.add_term_inplace(variable, -V::one())
+          new_cons.add_eqpoly(temp_poly, -b)
+        } 
       }
     }
   )
@@ -261,6 +273,14 @@ test "show" {
 
 
 // *** Solve Linear Program *** //
+
+///|
+/// add artificial variables and get init_solve
+fn[V] Lp::add_artificial (self : Lp[V]) -> Matrix[V] {
+  ...
+}
+ 
+
 ///|
 pub fn[V] Lp::solve_LP_bySimplex(self : Lp[V]) -> (Array[V], Array[Variable]){
 ...
