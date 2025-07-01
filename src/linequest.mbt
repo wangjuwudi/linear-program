@@ -113,7 +113,7 @@ test "Lp_from_Matrix" {
 }
 
 ///|
-pub fn[V : Zero] Lp::get_coeff_matrix (self : Lp[V]) -> Matrix[V] {
+pub fn[V] Lp::get_coeff_matrix (self : Lp[V]) -> Matrix[V] {
   Matrix::make(
     self.matrix.row() - 1, 
     self.matrix.col() - 1,
@@ -124,7 +124,7 @@ pub fn[V : Zero] Lp::get_coeff_matrix (self : Lp[V]) -> Matrix[V] {
 }
 
 ///|
-pub fn[V] Lp::get_objfunc_matrix(self : Lp[V]) -> Array[V] {
+pub fn[V] Lp::get_objfunc_vector(self : Lp[V]) -> Array[V] {
   self.matrix.row_to_array(0)[:self.matrix.col() - 1].to_array()
 }
 
@@ -157,7 +157,7 @@ test "get A,c,b" {
 
   println(lp.matrix)
   println(lp.get_coeff_matrix())
-  println(lp.get_objfunc_matrix())
+  println(lp.get_objfunc_vector())
   println(lp.get_b_vector())
 }
 
@@ -276,12 +276,87 @@ test "show" {
 
 ///|
 /// add artificial variables and get init_solve
-fn[V] Lp::add_artificial (self : Lp[V]) -> Matrix[V] {
-  ...
+fn[V : Zero + Compare + One] Lp::add_artificial (self : Lp[V]) -> (Matrix[V], Array[V]) {
+  let coeff = self.get_coeff_matrix()
+  let b_array =self.get_b_vector()
+
+  let init_solve: Array[V] = Array::make(self.vars.length(), V::zero())
+  let mut articifical_num = 0
+
+  // Count the number of non-zero elements in each column
+  let nozeronum_bycol  = Array::make(coeff.col(), 0)
+  for i in 0..<coeff.row() {
+    for j in 0..<coeff.col() {
+      if coeff[i][j] != V::zero() {
+        nozeronum_bycol[j] += 1
+      }
+    }
+  }
+  // establish artificial_matrix
+  //let artificial_matrix : Array[Array[V]] = Array::make(coeff.row(), Array::make(coeff.col(), V::zero())) 
+  let artificial_matrix = Matrix::new(coeff.row(), coeff.row(), V::zero())
+  for i in 0..<coeff.row() {
+    for j in 0..<coeff.col() {
+      // find unit_col in this row, need't add artificial variables in this row
+      if coeff[i][j] == V::one() && nozeronum_bycol[j] == 1{
+        init_solve[j] = b_array[i] // make X(j) = b_array[y]
+        break
+      }
+    }else{
+      // need add artificial variables in this row
+      for k in 0..<coeff.row() {
+        artificial_matrix[k][articifical_num] = (
+          match k == i {
+            true => V::one()
+            false => V::zero()
+          }
+        )       
+      }
+      init_solve.append([b_array[i]])
+      articifical_num += 1
+    }
+  }
+  println(articifical_num)
+  (
+    // integrate self.matrix and artificial_matrix, get the full_matrix
+    Matrix::make(
+      coeff.row(), 
+      coeff.col() + articifical_num,
+      fn (row, col) -> V {
+        if col < coeff.col() {
+          coeff[row][col]
+        }else{
+          artificial_matrix[row][col - coeff.col()]
+        }
+      }
+    ), 
+    init_solve
+  )
 }
- 
+
+test "artificial_matrix" {
+  let vars = [
+    Variable::new("x1", 0.0, @double.max_value),
+    Variable::new("x2", 0.0, @double.max_value),
+    Variable::new("x3", 0.0, @double.max_value),
+    Variable::new("x4", 0.0, @double.max_value),
+  ] 
+  let matrix = Matrix::from_2d_array(
+    [
+      [1,2,3,4,0],
+      [4,1,0,6,1],
+      [1,3,1,0,0],
+      [-1,4,7,1,2]
+    ]
+  )
+  let lp = Lp::from_matrix(matrix, vars, "min")
+  let x = lp.add_artificial()
+  println("添加人工变量后的系数矩阵：\n\{x.0}")
+  println("初始解： \{x.1}")
+}
 
 ///|
-pub fn[V] Lp::solve_LP_bySimplex(self : Lp[V]) -> (Array[V], Array[Variable]){
-...
-}
+// pub fn[V : Zero + Compare + One] Lp::solve_LP_bySimplex(self : Lp[V]) -> (Array[V], Array[Variable]){
+//   let (p1_matrix, init_solve) = self.add_artificial()
+//   ...
+// }
