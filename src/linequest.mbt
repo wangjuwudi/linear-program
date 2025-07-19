@@ -104,7 +104,7 @@ test "Lp_from_Matrix" {
     Variable::new("x3", 0.0, @double.max_value),
     Variable::new("x4", 0.0, @double.max_value),
   ]
-  let matrix = Matrix::from_2d_array([
+  let matrix: Matrix[Double] = Matrix::from_2d_array([
     [1, 2, 3, 4, 0],
     [4, 5, 0, 5, 1],
     [1, -4, 5, 1, 0],
@@ -253,12 +253,14 @@ test "show" {
 
 ///|
 /// add artificial variables and get init_solve
+/// return fmt (artificial_matrix, init_solve, artificial_index)
 fn[V : Zero + Compare + One] Lp::add_artificial(
   self : Lp[V]
-) -> (Matrix[V], Array[V]) {
+) -> (Matrix[V], Array[V], Array[Int]) {
   let coeff = self.get_coeff_matrix()
   let b_array = self.get_b_vector()
   let init_solve : Array[V] = Array::make(self.vars.length(), V::zero())
+  let artificial_index = Array::make(coeff.row(), 0)
   let mut articifical_num = 0
 
   // Count the number of non-zero elements in each column
@@ -271,63 +273,263 @@ fn[V : Zero + Compare + One] Lp::add_artificial(
     }
   }
   // establish artificial_matrix
-  //let artificial_matrix : Array[Array[V]] = Array::make(coeff.row(), Array::make(coeff.col(), V::zero())) 
+  // let artificial_matrix : Array[Array[V]] = Array::make(coeff.row(), Array::make(coeff.col(), V::zero())) 
   let artificial_matrix = Matrix::new(coeff.row(), coeff.row(), V::zero())
   for i in 0..<coeff.row() {
     for j in 0..<coeff.col() {
       // find unit_col in this row, need't add artificial variables in this row
       if coeff[i][j] == V::one() && nozeronum_bycol[j] == 1 {
-        init_solve[j] = b_array[i] // make X(j) = b_array[y]
+        init_solve[j] = b_array[i] // make X(j) = b_array[i]
+        artificial_index[i] = j
         break
       }
     } else {
       // need add artificial variables in this row
       for k in 0..<coeff.row() {
-        artificial_matrix[k][articifical_num] = match k == i {
-          true => V::one()
-          false => V::zero()
+        if k == i {
+          artificial_matrix[k][articifical_num] = V::one()
         }
       }
       init_solve.append([b_array[i]])
+      artificial_index[i] = coeff.col() + articifical_num
       articifical_num += 1
     }
   }
-  println(articifical_num)
+  let mut 
+  obj_func = Array::make(init_solve.length(), V::zero())
+  if articifical_num > 0 {
+    // make new_obj_func for artificial_variables
+    for i in 0..<init_solve.length() {
+      if i < self.vars.length() {
+        obj_func[i] = V::zero()
+      } else {
+        obj_func[i] = V::one()
+      }
+    }
+  }else {
+    // no artificial_variables
+    obj_func = self.get_objfunc_vector()
+  }
+  
   (
     // integrate self.matrix and artificial_matrix, get the full_matrix
-    Matrix::make(coeff.row(), coeff.col() + articifical_num, fn(row, col) -> V {
-      if col < coeff.col() {
-        coeff[row][col]
+    Matrix::make(coeff.row() + 1, coeff.col() + articifical_num + 1, fn(
+      row,
+      col
+    ) -> V {
+      if col >= coeff.col() + articifical_num {
+        if row == 0 {
+          V::zero()
+        } else {
+          b_array[row - 1]
+        }
+      } else if row == 0 {
+        obj_func[col]
+      } else if col < coeff.col() {
+        coeff[row - 1][col]
       } else {
-        artificial_matrix[row][col - coeff.col()]
+        artificial_matrix[row - 1][col - coeff.col()]
       }
     }),
     init_solve,
+    artificial_index
   )
 }
 
 ///|
 test "artificial_matrix" {
+  // test 1
   let vars = [
     Variable::new("x1", 0.0, @double.max_value),
     Variable::new("x2", 0.0, @double.max_value),
     Variable::new("x3", 0.0, @double.max_value),
     Variable::new("x4", 0.0, @double.max_value),
   ]
-  let matrix = Matrix::from_2d_array([
+  let matrix : Matrix[Double] = Matrix::from_2d_array([
     [1, 2, 3, 4, 0],
     [4, 1, 0, 6, 1],
     [1, 3, 1, 0, 0],
     [-1, 4, 7, 1, 2],
   ])
   let lp = Lp::from_matrix(matrix, vars, "min")
+  println("LP问题的矩阵形式,第一行为目标函数： \n\{lp.matrix}")
   let x = lp.add_artificial()
-  println("添加人工变量后的系数矩阵：\n\{x.0}")
+  println("添加人工变量后的LP矩阵：\n\{x.0}")
   println("初始解： \{x.1}")
+  println("单位列的索引： \{x.2}")
+
+  //test 2
+  let vars = [
+    Variable::new("x1", 0.0, @double.max_value),
+    Variable::new("x2", 0.0, @double.max_value)
+  ]
+
+  let obj_func = Obj_func::from_array(
+    "max",
+    [3.0, 4.0],
+    vars
+  ) 
+  let ineq = [
+    ([2.0, 1.0], "<=", 12.0),
+    ([1.0, 3.0], "<=", 10.0)
+  ]
+  let lp = Lp::new(obj_func, vars).cons_from_Array(ineq_array = ineq).to_standard()
+  println("LP问题的矩阵形式,第一行为目标函数： \n\{lp.matrix}")
+  let x = lp.add_artificial()
+  println("添加人工变量后的LP矩阵：\n\{x.0}")
+  println("初始解： \{x.1}")
+  println("单位列的索引： \{x.2}")
 }
 
 ///|
-// pub fn[V : Zero + Compare + One] Lp::solve_LP_bySimplex(self : Lp[V]) -> (Array[V], Array[Variable]){
-//   let (p1_matrix, init_solve) = self.add_artificial()
-//   ...
-// }
+pub fn[V : Show + Zero + Compare + One + Sub + Compare + Div + Mul] Lp::phase_1(
+  self : Lp[V]
+) -> (Array[V], Array[Variable]) {
+  let (matrix, _, artificial_index) = self.add_artificial()
+  let mut p1_matrix = matrix
+  let row = p1_matrix.row() 
+  let col = p1_matrix.col()
+  
+  for index, col_num in artificial_index {
+    if matrix[0][col_num] == V::one() {
+      for j in 0..<col {
+        matrix[0][j] = matrix[0][j] - matrix[index + 1][j]
+      }
+    }
+  }
+  
+  println(p1_matrix)
+  println(artificial_index)
+  while true {
+
+    // find in_base_var
+    let mut in_base_index = 0
+    let mut flag = true
+    for i in 0..<(col-1) {
+      if p1_matrix[0][i] < V::zero() &&
+        p1_matrix[0][i] <= p1_matrix[0][in_base_index] {
+        in_base_index = i
+        flag = false
+      }
+    } else {
+      if flag {
+        break
+      }
+    }
+
+    // find out_base_var
+    let mut per_ratio = V::zero()
+    let mut out_base_index = -1
+    flag = true
+    for j in 1..<row {
+      if (p1_matrix[j][in_base_index] == V::zero() || p1_matrix[j][col-1] / p1_matrix[j][in_base_index] <= V::zero()){
+        continue
+      }else{
+        let ratio = p1_matrix[j][col-1] / p1_matrix[j][in_base_index]
+        if flag == true || per_ratio > ratio {
+          per_ratio = ratio
+          out_base_index = j
+          flag = false
+        }
+      }
+    }else{
+      if flag {
+        println("Phase1 no_bound result")
+        break
+      }
+    }
+
+    println("main value:(\{out_base_index}, \{in_base_index})") 
+    println("By col index, in_base_index: \{in_base_index}, out_base_index: \{artificial_index[out_base_index-1]}")
+    
+    p1_matrix = Lp::pivot(p1_matrix, out_base_index, in_base_index)
+    println(p1_matrix)
+  }
+
+  {(Array::make(col, V::zero()), self.vars)}
+}
+
+///|
+test "phase1" {
+  let vars = [
+    Variable::new("x1", 0.0, @double.max_value),
+    Variable::new("x2", 0.0, @double.max_value)
+  ]
+
+  let obj_func = Obj_func::from_array(
+    "max",
+    [3.0, 4.0],
+    vars
+  ) 
+  let ineq = [
+    ([2.0, 1.0], "<=", 12.0),
+    ([1.0, 3.0], "<=", 10.0)
+  ]
+  let lp = Lp::new(obj_func, vars).cons_from_Array(ineq_array = ineq).to_standard()
+  let x = lp.phase_1()
+
+  let matrix : Matrix[Double] = Matrix::from_2d_array([
+    [5,4,0],
+    [2,3,7],
+    [3,2,8]
+  ])
+  let lp = Lp::from_matrix(matrix, vars, "max")
+  let x = lp.to_standard().phase_1()
+
+  // let vars = [
+  //   Variable::new("x1", 0.0, @double.max_value),
+  //   Variable::new("x2", 0.0, @double.max_value),
+  //   Variable::new("x3", 0.0, @double.max_value),
+  //   Variable::new("x4", 0.0, @double.max_value),
+  // ]
+  // let matrix: Matrix[Double] = Matrix::from_2d_array([
+  //   [1, 2, 3, 4, 0],
+  //   [4, 1, 0, 6, 1],
+  //   [1, 3, 1, 0, 0],
+  //   [-1, 4, 7, 1, 2],
+  // ])
+  // let lp = Lp::from_matrix(matrix, vars, "min")
+  // let x = lp.phase_1()
+
+}
+
+///|
+pub fn[V : Zero + Compare + Div + Mul + Sub] Lp::pivot(
+  matrix : Matrix[V],
+  row : Int,
+  col : Int
+) -> Matrix[V] {
+  let m_row = matrix.row()
+  let m_col = matrix.col()
+  guard row < m_row && col < m_col
+  let pivot_val = matrix[row][col]
+  if pivot_val == V::zero() {
+    println("pivot error, (\{row}, \{col}) is zero!")
+  } else {
+    for j in 0..<m_col {
+      matrix[row][j] = matrix[row][j] / pivot_val
+    } 
+    for i in 0..<m_row {
+      if i == row {
+        continue
+      }
+      let factor = matrix[i][col]
+      for j in 0..<m_col {
+        matrix[i][j] = matrix[i][j] - factor * matrix[row][j]
+      }
+    }
+  }
+  matrix
+}
+
+test "pivot" {
+  let matrix: Matrix[Double] = Matrix::from_2d_array([
+    [1, 2, 3, 4, 0],
+    [4, 1, 0, 6, 1],
+    [1, 3, 1, 0, 0],
+    [-1, 4, 7, 1, 2],
+  ])
+  println(Lp::pivot(matrix, 1, 1))
+}
+
+
