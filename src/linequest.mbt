@@ -52,7 +52,7 @@ pub fn[V : Compare + Semiring + Zero] Lp::reset_obj_byarray(
 ///|
 /// set constraint by Array
 /// the lable in ineq_array must be ">=" or "<="
-pub fn[V : Eq + Compare + Semiring] Lp::cons_from_Array(
+pub fn[V : Eq+ Semiring] Lp::cons_from_Array(
   self : Lp[V],
   eq_array~ : Array[(Array[V], V)] = [],
   ineq_array~ : Array[(Array[V], String, V)] = []
@@ -68,7 +68,7 @@ pub fn[V : Eq + Compare + Semiring] Lp::cons_from_Array(
 
 ///|
 /// transform Matrix to Linear-program standard model
-pub fn[V : Eq + Compare + Semiring] Lp::from_matrix(
+pub fn[V : Eq + Semiring] Lp::from_matrix(
   lp_matrix : Matrix[V],
   vars_for_matrix : Array[Variable],
   obj_type : String
@@ -124,7 +124,7 @@ pub fn[V] Lp::get_coeff_matrix(self : Lp[V]) -> Matrix[V] {
   })
 }
 
-///|
+///| get obj_func coeff from matrix
 pub fn[V] Lp::get_objfunc_vector(self : Lp[V]) -> Array[V] {
   self.matrix.row_to_array(0)[:self.matrix.col() - 1].to_array()
 }
@@ -295,8 +295,7 @@ fn[V : Zero + Compare + One] Lp::add_artificial(
       articifical_num += 1
     }
   }
-  let mut 
-  obj_func = Array::make(init_solve.length(), V::zero())
+  let mut obj_func = Array::make(init_solve.length(), V::zero())
   if articifical_num > 0 {
     // make new_obj_func for artificial_variables
     for i in 0..<init_solve.length() {
@@ -382,9 +381,48 @@ test "artificial_matrix" {
 }
 
 ///|
-pub fn[V : Show + Zero + Compare + One + Sub + Compare + Div + Mul] Lp::phase_1(
+pub fn[V : Zero + Compare + Div + Mul + Sub] Lp::pivot(
+  matrix : Matrix[V],
+  row : Int,
+  col : Int
+) -> Matrix[V] {
+  let m_row = matrix.row()
+  let m_col = matrix.col()
+  guard row < m_row && col < m_col
+  let pivot_val = matrix[row][col]
+  if pivot_val == V::zero() {
+    println("pivot error, (\{row}, \{col}) is zero!")
+  } else {
+    for j in 0..<m_col {
+      matrix[row][j] = matrix[row][j] / pivot_val
+    } 
+    for i in 0..<m_row {
+      if i == row {
+        continue
+      }
+      let factor = matrix[i][col]
+      for j in 0..<m_col {
+        matrix[i][j] = matrix[i][j] - factor * matrix[row][j]
+      }
+    }
+  }
+  matrix
+}
+
+test "pivot" {
+  let matrix: Matrix[Double] = Matrix::from_2d_array([
+    [1, 2, 3, 4, 0],
+    [4, 1, 0, 6, 1],
+    [1, 3, 1, 0, 0],
+    [-1, 4, 7, 1, 2],
+  ])
+  println(Lp::pivot(matrix, 1, 1))
+}
+
+///|
+pub fn[V : Zero + Compare + One + Sub + Compare + Div + Mul] Lp::phase_1(
   self : Lp[V]
-) -> (Array[V], Array[Variable]) {
+) -> (Array[Int], Matrix[V]) {
   let (matrix, _, artificial_index) = self.add_artificial()
   let mut p1_matrix = matrix
   let row = p1_matrix.row() 
@@ -398,8 +436,8 @@ pub fn[V : Show + Zero + Compare + One + Sub + Compare + Div + Mul] Lp::phase_1(
     }
   }
   
-  println(p1_matrix)
-  println(artificial_index)
+  //println(p1_matrix)
+  //println(artificial_index)
   while true {
 
     // find in_base_var
@@ -439,14 +477,17 @@ pub fn[V : Show + Zero + Compare + One + Sub + Compare + Div + Mul] Lp::phase_1(
       }
     }
 
-    println("main value:(\{out_base_index}, \{in_base_index})") 
-    println("By col index, in_base_index: \{in_base_index}, out_base_index: \{artificial_index[out_base_index-1]}")
+    //println("main value:(\{out_base_index}, \{in_base_index})") 
+    //println("By col index, in_base_index: \{in_base_index}, out_base_index: \{artificial_index[out_base_index-1]}")
     
     p1_matrix = Lp::pivot(p1_matrix, out_base_index, in_base_index)
-    println(p1_matrix)
+    //println(p1_matrix)
   }
 
-  {(Array::make(col, V::zero()), self.vars)}
+  (
+    artificial_index,
+    matrix
+  )
 }
 
 ///|
@@ -467,7 +508,8 @@ test "phase1" {
   ]
   let lp = Lp::new(obj_func, vars).cons_from_Array(ineq_array = ineq).to_standard()
   let x = lp.phase_1()
-
+  println(x.1)
+  println("\n")
   let matrix : Matrix[Double] = Matrix::from_2d_array([
     [5,4,0],
     [2,3,7],
@@ -475,61 +517,72 @@ test "phase1" {
   ])
   let lp = Lp::from_matrix(matrix, vars, "max")
   let x = lp.to_standard().phase_1()
-
-  // let vars = [
-  //   Variable::new("x1", 0.0, @double.max_value),
-  //   Variable::new("x2", 0.0, @double.max_value),
-  //   Variable::new("x3", 0.0, @double.max_value),
-  //   Variable::new("x4", 0.0, @double.max_value),
-  // ]
-  // let matrix: Matrix[Double] = Matrix::from_2d_array([
-  //   [1, 2, 3, 4, 0],
-  //   [4, 1, 0, 6, 1],
-  //   [1, 3, 1, 0, 0],
-  //   [-1, 4, 7, 1, 2],
-  // ])
-  // let lp = Lp::from_matrix(matrix, vars, "min")
-  // let x = lp.phase_1()
-
+  println(x.1)
+  println("\n")
+  let vars = [
+    Variable::new("x1", 0.0, @double.max_value),
+    Variable::new("x2", 0.0, @double.max_value),
+    Variable::new("x3", 0.0, @double.max_value),
+  ]
+  let matrix: Matrix[Double] = Matrix::from_2d_array([
+    [-1, -2, -3, 0],
+    [1, 2, 3, 10],
+    [2, 1, 1, 8],
+  ])
+  let lp = Lp::from_matrix(matrix, vars, "min")
+  let x = lp.phase_1()
+  println(x.1)
+  println("\n")
 }
 
-///|
-pub fn[V : Zero + Compare + Div + Mul + Sub] Lp::pivot(
-  matrix : Matrix[V],
-  row : Int,
-  col : Int
-) -> Matrix[V] {
-  let m_row = matrix.row()
-  let m_col = matrix.col()
-  guard row < m_row && col < m_col
-  let pivot_val = matrix[row][col]
-  if pivot_val == V::zero() {
-    println("pivot error, (\{row}, \{col}) is zero!")
-  } else {
-    for j in 0..<m_col {
-      matrix[row][j] = matrix[row][j] / pivot_val
-    } 
-    for i in 0..<m_row {
-      if i == row {
-        continue
-      }
-      let factor = matrix[i][col]
-      for j in 0..<m_col {
-        matrix[i][j] = matrix[i][j] - factor * matrix[row][j]
+/// get base_best_solve from phase1 matrix
+pub fn[V: Zero + Compare + One] Lp::phase_2(var_array: Array[Variable], matrix: Matrix[V]) ->  Array[V] {
+  let row = matrix.row()
+  let col = matrix.col()
+  let var_num = var_array.length()
+  let best_base_solve = Array::make(var_num, V::zero())
+
+  // Count the number of non-zero elements in each column
+  let nozeronum_bycol = Array::make(var_num, 0)
+  for i in 0..<row {
+    for j in 0..<var_num {
+      if matrix[i][j] != V::zero() {
+        nozeronum_bycol[j] += 1
       }
     }
   }
-  matrix
+
+  for i in 1..<row{
+    for j in 0..<(var_num) {
+      if matrix[i][j] == V::one() && nozeronum_bycol[j] == 1{
+        best_base_solve[j] = matrix[i][col - 1]
+      }
+    }
+  }
+  best_base_solve
 }
 
-test "pivot" {
+test "phase2" {
+  let vars = [
+    Variable::new("x1", 0.0, @double.max_value),
+    Variable::new("x2", 0.0, @double.max_value),
+    Variable::new("x3", 0.0, @double.max_value),
+  ]
   let matrix: Matrix[Double] = Matrix::from_2d_array([
-    [1, 2, 3, 4, 0],
-    [4, 1, 0, 6, 1],
-    [1, 3, 1, 0, 0],
-    [-1, 4, 7, 1, 2],
+    [-1, -2, -3, 0],
+    [1, 2, 3, 10],
+    [2, 1, 1, 8],
   ])
-  println(Lp::pivot(matrix, 1, 1))
+  let lp = Lp::from_matrix(matrix, vars, "min").to_standard()
+  println(lp)
+  
+  let phase1 = lp.phase_1()
+  let phase2 = Lp::phase_2(vars, phase1.1)
+  let obj_func = lp.get_objfunc_vector()
+
+  let mut res = 0.0
+  for index, x in obj_func {
+    res = res + x * phase2[index]
+  }
+  println("变量：\{vars}, 最优基本可行解：\{phase2}\n目标函数的最优解：\{res}")
 }
-
-
