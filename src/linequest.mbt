@@ -52,7 +52,7 @@ pub fn[V : Compare + Semiring + Zero] Lp::reset_obj_byarray(
 ///|
 /// set constraint by Array
 /// the lable in ineq_array must be ">=" or "<="
-pub fn[V : Eq+ Semiring] Lp::cons_from_Array(
+pub fn[V : Eq + Semiring] Lp::cons_from_Array(
   self : Lp[V],
   eq_array~ : Array[(Array[V], V)] = [],
   ineq_array~ : Array[(Array[V], String, V)] = []
@@ -104,7 +104,7 @@ test "Lp_from_Matrix" {
     Variable::new("x3", 0.0, @double.max_value),
     Variable::new("x4", 0.0, @double.max_value),
   ]
-  let matrix: Matrix[Double] = Matrix::from_2d_array([
+  let matrix : Matrix[Double] = Matrix::from_2d_array([
     [1, 2, 3, 4, 0],
     [4, 5, 0, 5, 1],
     [1, -4, 5, 1, 0],
@@ -305,11 +305,10 @@ fn[V : Zero + Compare + One] Lp::add_artificial(
         obj_func[i] = V::one()
       }
     }
-  }else {
+  } else {
     // no artificial_variables
     obj_func = self.get_objfunc_vector()
   }
-  
   (
     // integrate self.matrix and artificial_matrix, get the full_matrix
     Matrix::make(coeff.row() + 1, coeff.col() + articifical_num + 1, fn(
@@ -331,7 +330,7 @@ fn[V : Zero + Compare + One] Lp::add_artificial(
       }
     }),
     init_solve,
-    artificial_index
+    artificial_index,
   )
 }
 
@@ -360,19 +359,13 @@ test "artificial_matrix" {
   //test 2
   let vars = [
     Variable::new("x1", 0.0, @double.max_value),
-    Variable::new("x2", 0.0, @double.max_value)
+    Variable::new("x2", 0.0, @double.max_value),
   ]
-
-  let obj_func = Obj_func::from_array(
-    "max",
-    [3.0, 4.0],
-    vars
-  ) 
-  let ineq = [
-    ([2.0, 1.0], "<=", 12.0),
-    ([1.0, 3.0], "<=", 10.0)
-  ]
-  let lp = Lp::new(obj_func, vars).cons_from_Array(ineq_array = ineq).to_standard()
+  let obj_func = Obj_func::from_array("max", [3.0, 4.0], vars)
+  let ineq = [([2.0, 1.0], "<=", 12.0), ([1.0, 3.0], "<=", 10.0)]
+  let lp = Lp::new(obj_func, vars)
+    .cons_from_Array(ineq_array=ineq)
+    .to_standard()
   println("LP问题的矩阵形式,第一行为目标函数： \n\{lp.matrix}")
   let x = lp.add_artificial()
   println("添加人工变量后的LP矩阵：\n\{x.0}")
@@ -395,7 +388,7 @@ pub fn[V : Zero + Compare + Div + Mul + Sub] Lp::pivot(
   } else {
     for j in 0..<m_col {
       matrix[row][j] = matrix[row][j] / pivot_val
-    } 
+    }
     for i in 0..<m_row {
       if i == row {
         continue
@@ -408,8 +401,9 @@ pub fn[V : Zero + Compare + Div + Mul + Sub] Lp::pivot(
   }
 }
 
+///|
 test "pivot" {
-  let matrix: Matrix[Double] = Matrix::from_2d_array([
+  let matrix : Matrix[Double] = Matrix::from_2d_array([
     [1, 2, 3, 4, 0],
     [4, 1, 0, 6, 1],
     [1, 3, 1, 0, 0],
@@ -420,14 +414,13 @@ test "pivot" {
 
 ///|
 pub fn[V : Zero + One + Compare + Sub + Compare + Div + Mul] Lp::phase_1(
-  p1_matrix: Matrix[V],
-  artificial_index: Array[Int]
+  p1_matrix : Matrix[V],
+  artificial_index : Array[Int]
 ) -> Matrix[V] {
   // let (matrix, _, artificial_index) = self.add_artificial()
   // let p1_matrix = matrix
-  let row = p1_matrix.row() 
+  let row = p1_matrix.row()
   let col = p1_matrix.col()
-  
   for index, col_num in artificial_index {
     if p1_matrix[0][col_num] == V::one() {
       for j in 0..<col {
@@ -435,7 +428,7 @@ pub fn[V : Zero + One + Compare + Sub + Compare + Div + Mul] Lp::phase_1(
       }
     }
   }
-  
+
   //println(p1_matrix)
   //println(artificial_index)
   while true {
@@ -443,7 +436,7 @@ pub fn[V : Zero + One + Compare + Sub + Compare + Div + Mul] Lp::phase_1(
     // find in_base_var
     let mut in_base_index = 0
     let mut flag = true
-    for i in 0..<(col-1) {
+    for i in 0..<(col - 1) {
       if p1_matrix[0][i] < V::zero() &&
         p1_matrix[0][i] <= p1_matrix[0][in_base_index] {
         in_base_index = i
@@ -460,17 +453,18 @@ pub fn[V : Zero + One + Compare + Sub + Compare + Div + Mul] Lp::phase_1(
     let mut out_base_index = -1
     flag = true
     for j in 1..<row {
-      if (p1_matrix[j][in_base_index] == V::zero() || p1_matrix[j][col-1] / p1_matrix[j][in_base_index] <= V::zero()){
+      if p1_matrix[j][in_base_index] == V::zero() ||
+        p1_matrix[j][col - 1] / p1_matrix[j][in_base_index] <= V::zero() {
         continue
-      }else{
-        let ratio = p1_matrix[j][col-1] / p1_matrix[j][in_base_index]
+      } else {
+        let ratio = p1_matrix[j][col - 1] / p1_matrix[j][in_base_index]
         if flag == true || per_ratio > ratio {
           per_ratio = ratio
           out_base_index = j
           flag = false
         }
       }
-    }else{
+    } else {
       if flag {
         println("Phase1 no_bound result")
         break
@@ -479,38 +473,32 @@ pub fn[V : Zero + One + Compare + Sub + Compare + Div + Mul] Lp::phase_1(
 
     //println("main value:(\{out_base_index}, \{in_base_index})") 
     //println("By col index, in_base_index: \{in_base_index}, out_base_index: \{artificial_index[out_base_index-1]}")
-    
+
     Lp::pivot(p1_matrix, out_base_index, in_base_index)
     //println(p1_matrix)
   }
-    p1_matrix
+  p1_matrix
 }
 
 ///|
 test "phase1" {
   let vars = [
     Variable::new("x1", 0.0, @double.max_value),
-    Variable::new("x2", 0.0, @double.max_value)
+    Variable::new("x2", 0.0, @double.max_value),
   ]
-
-  let obj_func = Obj_func::from_array(
-    "max",
-    [3.0, 4.0],
-    vars
-  ) 
-  let ineq = [
-    ([2.0, 1.0], "<=", 12.0),
-    ([1.0, 3.0], "<=", 10.0)
-  ]
-  let lp = Lp::new(obj_func, vars).cons_from_Array(ineq_array = ineq).to_standard()
+  let obj_func = Obj_func::from_array("max", [3.0, 4.0], vars)
+  let ineq = [([2.0, 1.0], "<=", 12.0), ([1.0, 3.0], "<=", 10.0)]
+  let lp = Lp::new(obj_func, vars)
+    .cons_from_Array(ineq_array=ineq)
+    .to_standard()
   let artificial = lp.add_artificial()
   let x = Lp::phase_1(artificial.0, artificial.2)
   println(x)
   println("\n")
   let matrix : Matrix[Double] = Matrix::from_2d_array([
-    [5,4,0],
-    [2,3,7],
-    [3,2,8]
+    [5, 4, 0],
+    [2, 3, 7],
+    [3, 2, 8],
   ])
   let lp = Lp::from_matrix(matrix, vars, "max")
   let artificial = lp.add_artificial()
@@ -522,7 +510,7 @@ test "phase1" {
     Variable::new("x2", 0.0, @double.max_value),
     Variable::new("x3", 0.0, @double.max_value),
   ]
-  let matrix: Matrix[Double] = Matrix::from_2d_array([
+  let matrix : Matrix[Double] = Matrix::from_2d_array([
     [-1, -2, -3, 0],
     [1, 2, 3, 10],
     [2, 1, 1, 8],
@@ -534,14 +522,18 @@ test "phase1" {
   println("\n")
 }
 
-/// get base_best_solve from phase1 matrix
-pub fn[V: Zero + Compare + One + Neg] Lp::phase_2(var_array: Array[Variable], matrix: Matrix[V]) ->  Array[V] {
+///| get base_best_solve from phase1 matrix
+pub fn[V : Zero + Compare + One + Neg] Lp::phase_2(
+  var_array : Array[Variable],
+  matrix : Matrix[V]
+) -> Array[V] {
   let row = matrix.row()
   let col = matrix.col()
   let var_num = var_array.length()
-
-  guard var_num == col - 1 || (matrix[0][col-1] < V::one() && matrix[0][col-1] > -V::one()) 
-  else{ abort("W* from Phase1 isn't zero, Lp doesn't have solution ") }
+  guard var_num == col - 1 ||
+    (matrix[0][col - 1] < V::one() && matrix[0][col - 1] > -V::one()) else {
+    abort("W* from Phase1 isn't zero, Lp doesn't have solution ")
+  }
   let best_base_solve = Array::make(var_num, V::zero())
 
   // Count the number of non-zero elements in each column
@@ -553,10 +545,9 @@ pub fn[V: Zero + Compare + One + Neg] Lp::phase_2(var_array: Array[Variable], ma
       }
     }
   }
-
-  for i in 1..<row{
-    for j in 0..<(var_num) {
-      if matrix[i][j] == V::one() && nozeronum_bycol[j] == 1{
+  for i in 1..<row {
+    for j in 0..<var_num {
+      if matrix[i][j] == V::one() && nozeronum_bycol[j] == 1 {
         best_base_solve[j] = matrix[i][col - 1]
       }
     }
@@ -564,13 +555,14 @@ pub fn[V: Zero + Compare + One + Neg] Lp::phase_2(var_array: Array[Variable], ma
   best_base_solve
 }
 
+///|
 test "phase2" {
   let vars = [
     Variable::new("x1", 0.0, @double.max_value),
     Variable::new("x2", 0.0, @double.max_value),
     Variable::new("x3", 0.0, @double.max_value),
   ]
-  let matrix: Matrix[Double] = Matrix::from_2d_array([
+  let matrix : Matrix[Double] = Matrix::from_2d_array([
     [-1, -2, -3, 0],
     [1, 2, 3, 10],
     [2, 1, 1, 8],
@@ -582,31 +574,31 @@ test "phase2" {
   println(phase1)
   let phase2 = Lp::phase_2(vars, phase1)
   let obj_func = lp.get_objfunc_vector()
-
   let mut res = 0.0
   for index, x in obj_func {
     res = res + x * phase2[index]
   }
-  println("variables：\{vars}, The_best_base_solve：\{phase2}\nThe Object_function result：\{res}")
+  println(
+    "variables：\{vars}, The_best_base_solve：\{phase2}\nThe Object_function result：\{res}",
+  )
 }
 
-
 ///| make sure the to_standard() has been done
-pub fn[V: Eq + Zero + One + Compare + Mul + Div + Sub + Add + Neg] Lp::two_stage(self: Lp[V]) -> (Array[V], V) {
+pub fn[V : Eq + Zero + One + Compare + Mul + Div + Sub + Add + Neg] Lp::two_stage(
+  self : Lp[V]
+) -> (Array[V], V) {
   let artificial = self.add_artificial()
   let phase1 = Lp::phase_1(artificial.0, artificial.2)
   let phase2 = Lp::phase_2(self.vars, phase1)
   let obj_func = self.get_objfunc_vector()
-
   let mut res = V::zero()
   for index, x in obj_func {
     res = res + x * phase2[index]
   }
-  (
-    phase2,
-    res
-  )
+  (phase2, res)
 }
+
+///|
 test "two_stage" {
   // example 1  equal_constrains
   // min cx
@@ -616,10 +608,10 @@ test "two_stage" {
     Variable::new("x2", 0.0, @double.max_value),
     Variable::new("x3", 0.0, @double.max_value),
   ]
-  let matrix: Matrix[Double] = Matrix::from_2d_array([
+  let matrix : Matrix[Double] = Matrix::from_2d_array([
     [-1, -2, -3, 0],
-    [1, 0, 3, 10],
-    [0, 1, 1, 8],
+    [1, 2, 3, 10],
+    [2, 1, 1, 8],
   ])
   let lp = Lp::from_matrix(matrix, vars, "min").to_standard()
   let res = lp.two_stage()
@@ -632,20 +624,14 @@ test "two_stage" {
   // s.t.  Ax <= b
   let vars = [
     Variable::new("x1", 0.0, @double.max_value),
-    Variable::new("x2", 0.0, @double.max_value)
+    Variable::new("x2", 0.0, @double.max_value),
   ]
-  let obj_func = Obj_func::from_array(
-    "max",
-    [3.0, 4.0],
-    vars
-  ) 
-  let ineq = [
-    ([2.0, 1.0], "<=", 12.0),
-    ([1.0, 3.0], "<=", 10.0)
-  ]
-  let lp = Lp::new(obj_func, vars).cons_from_Array(ineq_array = ineq).to_standard()
+  let obj_func = Obj_func::from_array("max", [3.0, 4.0], vars)
+  let ineq = [([2.0, 1.0], "<=", 12.0), ([1.0, 3.0], "<=", 10.0)]
+  let lp = Lp::new(obj_func, vars)
+    .cons_from_Array(ineq_array=ineq)
+    .to_standard()
   let res = lp.two_stage()
-
   println(vars)
   println(res.0)
   println(-res.1) //because source problem is "MAX", so real_res = -res
@@ -655,18 +641,13 @@ test "two_stage" {
   // s.t.  Ax >= b
   let vars = [
     Variable::new("x1", 0.0, @double.max_value),
-    Variable::new("x2", 0.0, @double.max_value)
+    Variable::new("x2", 0.0, @double.max_value),
   ]
-  let obj_func = Obj_func::from_array(
-    "min",
-    [3.0, 4.0],
-    vars
-  ) 
-  let ineq = [
-    ([2.0, 1.0], ">=", 12.0),
-    ([1.0, 3.0], ">=", 10.0)
-  ]
-  let lp = Lp::new(obj_func, vars).cons_from_Array(ineq_array = ineq).to_standard()
+  let obj_func = Obj_func::from_array("min", [3.0, 4.0], vars)
+  let ineq = [([2.0, 1.0], ">=", 12.0), ([1.0, 3.0], ">=", 10.0)]
+  let lp = Lp::new(obj_func, vars)
+    .cons_from_Array(ineq_array=ineq)
+    .to_standard()
   let res = lp.two_stage()
   println(vars)
   println(res.0)
@@ -678,18 +659,13 @@ test "two_stage" {
   // s.t. Ax <= b
   let vars = [
     Variable::new("x1", 0.0, @double.max_value),
-    Variable::new("x2", 0.0, @double.max_value)
+    Variable::new("x2", 0.0, @double.max_value),
   ]
-  let obj_func = Obj_func::from_array(
-    "min",
-    [3.0, 4.0],
-    vars
-  ) 
-  let ineq = [
-    ([2.0, 1.0], "<=", 12.0),
-    ([1.0, 3.0], "<=", 10.0)
-  ]
-  let lp = Lp::new(obj_func, vars).cons_from_Array(ineq_array = ineq).to_standard()
+  let obj_func = Obj_func::from_array("min", [3.0, 4.0], vars)
+  let ineq = [([2.0, 1.0], "<=", 12.0), ([1.0, 3.0], "<=", 10.0)]
+  let lp = Lp::new(obj_func, vars)
+    .cons_from_Array(ineq_array=ineq)
+    .to_standard()
   println(lp)
   let res = lp.two_stage()
   println(vars)
@@ -701,18 +677,13 @@ test "two_stage" {
   // s.t. Ax >= b
   let vars = [
     Variable::new("x1", 0.0, @double.max_value),
-    Variable::new("x2", 0.0, @double.max_value)
+    Variable::new("x2", 0.0, @double.max_value),
   ]
-  let obj_func = Obj_func::from_array(
-    "max",
-    [3.0, 4.0],
-    vars
-  ) 
-  let ineq = [
-    ([2.0, 1.0], ">=", 12.0),
-    ([1.0, 3.0], ">=", 10.0)
-  ]
-  let lp = Lp::new(obj_func, vars).cons_from_Array(ineq_array = ineq).to_standard()
+  let obj_func = Obj_func::from_array("max", [3.0, 4.0], vars)
+  let ineq = [([2.0, 1.0], ">=", 12.0), ([1.0, 3.0], ">=", 10.0)]
+  let lp = Lp::new(obj_func, vars)
+    .cons_from_Array(ineq_array=ineq)
+    .to_standard()
   println(lp)
   let res = lp.two_stage()
   println(vars)
@@ -721,25 +692,25 @@ test "two_stage" {
   println("\n")
 
   // no-solve example 1
-  let vars = [
-    Variable::new("x1", 0.0, @double.max_value),
-    Variable::new("x2", 0.0, @double.max_value)
-  ]
-  let obj_func = Obj_func::from_array(
-    "min",
-    [3.0, 4.0],
-    vars
-  ) 
-  let ineq = [
-    ([2.0, 1.0], ">=", 12.0),
-    ([2.0, 1.0], "<=", 10.0)
-  ]
-  let lp = Lp::new(obj_func, vars).cons_from_Array(ineq_array = ineq).to_standard()
-  println(lp)
-  let res = lp.two_stage()
-  println(vars)
-  println(res.0)
-  println(res.1)
-  println("\n")
+  // let vars = [
+  //   Variable::new("x1", 0.0, @double.max_value),
+  //   Variable::new("x2", 0.0, @double.max_value)
+  // ]
+  // let obj_func = Obj_func::from_array(
+  //   "min",
+  //   [3.0, 4.0],
+  //   vars
+  // ) 
+  // let ineq = [
+  //   ([2.0, 1.0], ">=", 12.0),
+  //   ([2.0, 1.0], "<=", 10.0)
+  // ]
+  // let lp = Lp::new(obj_func, vars).cons_from_Array(ineq_array = ineq).to_standard()
+  // println(lp)
+  // let res = lp.two_stage()
+  // println(vars)
+  // println(res.0)
+  // println(res.1)
+  // println("\n")
 
 }

@@ -123,9 +123,7 @@ pub fn[V : Eq + Semiring + Zero] Poly::add_term_inplace(
 }
 
 ///|
-pub fn[V : Eq + Semiring + Zero] Poly::copy(
-  self : Poly[V]
-) -> Poly[V] {
+pub fn[V : Eq + Semiring + Zero] Poly::copy(self : Poly[V]) -> Poly[V] {
   let m = Poly::new()
   self
   .inner()
