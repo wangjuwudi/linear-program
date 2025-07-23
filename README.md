@@ -40,3 +40,29 @@ let matrix = Matrix::from_2d_array([
 
 let lp = Lp::from_matrix(matrix, vars, "min")
 ```
+
+/** solve linear-program by two_stage method */  
+(1) define linear-program  
+```moonbit
+let vars = [
+  Variable::new("x1", 0.0, @double.max_value),
+  Variable::new("x2", 0.0, @double.max_value),
+  Variable::new("x3", 0.0, @double.max_value),
+]
+  let matrix: Matrix[Double] = Matrix::from_2d_array([
+    [-1, -2, -3, 0],
+    [1, 2, 3, 10],
+    [2, 1, 1, 8],
+  ])
+```
+(2) make program standardization and call two-stage function
+```moonbit
+let lp = Lp::from_matrix(matrix, vars, "min").to_standard()
+let res = lp.two_stage()
+```
+(3) Result (vars, best_base_solve, object_function_value)
+```moonbit
+[x1, x2, x3]  //(lp.vars)
+[1.9999999999999991, 4.000000000000001, 0] //(res.0)
+-10 //(res.1)
+```

@@ -32,7 +32,7 @@ pub impl[V : Eq + Show + Semiring + One] Show for Poly[V] with output(self, l) {
 }
 
 ///|
-pub impl[V : Eq + Semiring + Compare + Zero + Neg] Neg for Poly[V] with op_neg(
+pub impl[V : Eq + Semiring + Zero + Neg] Neg for Poly[V] with op_neg(
   self : Poly[V]
 ) -> Poly[V] {
   let m = Poly::new()
@@ -64,7 +64,7 @@ pub fn[V] Poly::new() -> Poly[V] {
 }
 
 ///|
-pub fn[V : Eq + Compare + Semiring] Poly::from_var_array(
+pub fn[V : Eq + Semiring] Poly::from_var_array(
   arr : Array[V],
   vars : Array[Variable]
 ) -> Poly[V] {
@@ -107,7 +107,7 @@ pub fn[V : Zero] Poly::to_vector(
 }
 
 ///|
-pub fn[V : Eq + Semiring + Compare + Zero] Poly::add_term_inplace(
+pub fn[V : Eq + Semiring + Zero] Poly::add_term_inplace(
   self : Poly[V],
   variable : Variable,
   coeff : V
@@ -123,9 +123,7 @@ pub fn[V : Eq + Semiring + Compare + Zero] Poly::add_term_inplace(
 }
 
 ///|
-pub fn[V : Eq + Semiring + Compare + Zero] Poly::copy(
-  self : Poly[V]
-) -> Poly[V] {
+pub fn[V : Eq + Semiring + Zero] Poly::copy(self : Poly[V]) -> Poly[V] {
   let m = Poly::new()
   self
   .inner()

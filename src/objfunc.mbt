@@ -41,7 +41,7 @@ pub fn[V] Obj_func::set_poly(self : Obj_func[V], poly : Poly[V]) -> Obj_func[V] 
 }
 
 ///|
-pub fn[V : Eq + Semiring + Compare + Zero] Obj_func::add_term_inplace(
+pub fn[V : Eq + Semiring + Zero] Obj_func::add_term_inplace(
   self : Obj_func[V],
   variable : Variable,
   coeff : V
@@ -50,7 +50,7 @@ pub fn[V : Eq + Semiring + Compare + Zero] Obj_func::add_term_inplace(
 }
 
 ///|
-pub fn[V : Eq + Compare + Semiring] Obj_func::from_array(
+pub fn[V : Eq + Semiring] Obj_func::from_array(
   obj_type : String,
   arr : Array[V],
   vars : Array[Variable]
@@ -59,7 +59,7 @@ pub fn[V : Eq + Compare + Semiring] Obj_func::from_array(
 }
 
 ///|
-pub fn[V : Eq + Semiring + Compare + Zero + Neg] Obj_func::to_min(
+pub fn[V : Eq + Semiring + Zero + Neg] Obj_func::to_min(
   self : Obj_func[V]
 ) -> Obj_func[V] {
   match self.sense {

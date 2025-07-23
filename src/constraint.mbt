@@ -99,7 +99,7 @@ test "add_eqpoly" {
 }
 
 ///|
-pub fn[V : Eq + Compare + Semiring] Constraint::from_array(
+pub fn[V : Eq + Semiring] Constraint::from_array(
   eq_array~ : Array[(Array[V], V)] = [],
   ineq_array~ : Array[(Array[V], String, V)] = [],
   vars : Array[Variable]
