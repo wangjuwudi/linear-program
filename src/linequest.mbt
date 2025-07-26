@@ -7,17 +7,15 @@ struct Lp[V] {
 }
 
 ///|
-pub impl[V : Show + Eq + Semiring] Show for Lp[V] with to_string(self) -> String {
-  let mut s = self.obj_func.to_string() + "\n" + self.constraint.to_string()
-  for x in self.vars {
-    s = s + " " + x.show_all()
-  }
-  s + "\n"
-}
-
-///|
 pub impl[V : Show + Eq + Semiring] Show for Lp[V] with output(self, l) -> Unit {
-  l.write_string(self.to_string())
+  l
+  ..write_object(self.obj_func)
+  ..write_char('\n')
+  ..write_object(self.constraint)
+  for x in self.vars {
+    l..write_char(' ')..write_string(x.show_all())
+  }
+  l.write_char('\n')
 }
 
 ///|

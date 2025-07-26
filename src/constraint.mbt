@@ -5,22 +5,24 @@ struct Constraint[V] {
 }
 
 ///|
-pub impl[V : Show + Eq + Semiring] Show for Constraint[V] with to_string(
-  self : Constraint[V],
-) -> String {
-  let mut res = ""
+pub impl[V : Show + Eq + Semiring] Show for Constraint[V] with output(self, l) {
+  l.write_string("s.t. ")
   for x in self.eq_poly {
-    res += x.0.to_string() + " = " + x.1.to_string() + "\n     "
+    l
+    ..write_object(x.0)
+    ..write_string(" = ")
+    ..write_object(x.1)
+    ..write_string("\n     ")
   }
   for x in self.ineq_poly {
-    res += x.0.to_string() + " \{x.1} " + x.2.to_string() + "\n    "
+    l
+    ..write_object(x.0)
+    ..write_char(' ')
+    ..write_string(x.1)
+    ..write_char(' ')
+    ..write_object(x.2)
+    ..write_string("\n    ")
   }
-  "s.t. " + res
-}
-
-///|
-pub impl[V : Show + Eq + Semiring] Show for Constraint[V] with output(self, l) {
-  l.write_string(self.to_string())
 }
 
 ///|

@@ -2,33 +2,23 @@
 type Poly[V] @sorted_map.T[Variable, V] derive(Eq)
 
 ///|
-pub impl[V : Eq + Show + Semiring + @lg.One] Show for Poly[V] with to_string(
-  self,
-) -> String {
-  let mut s = ""
+pub impl[V : Eq + Show + Semiring + One] Show for Poly[V] with output(self, l) {
   let mut fst = true
   self
   .inner()
   .each(fn(variable, coff) -> Unit {
-    if not(fst) {
-      s += " + "
+    if fst {
+      fst = false
+    } else {
+      l.write_string(" + ")
     }
     if coff == V::one() {
-      s += variable.to_string()
-    } else if coff == V::zero() {
-      s += ""
-    } else {
-      s += coff.to_string()
-      s += variable.to_string()
+      l.write_object(variable)
+    } else if coff != V::zero() {
+      l.write_object(coff)
+      l.write_object(variable)
     }
-    fst = false
   })
-  s
-}
-
-///|
-pub impl[V : Eq + Show + Semiring + One] Show for Poly[V] with output(self, l) {
-  l.write_string(self.to_string())
 }
 
 ///|

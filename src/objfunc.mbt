@@ -11,16 +11,15 @@ struct Obj_func[V] {
 }
 
 ///|
-pub impl[V : Eq + Show + Semiring] Show for Obj_func[V] with to_string(self) -> String {
-  match self.sense {
-    Minimize => "min  " + self.obj_poly.to_string()
-    Maximize => "max  " + self.obj_poly.to_string()
-  }
-}
-
-///|
 pub impl[V : Eq + Show + Semiring] Show for Obj_func[V] with output(self, l) {
-  l.write_string(self.to_string())
+  l
+  ..write_string(
+    match self.sense {
+      Minimize => "min  "
+      Maximize => "max  "
+    },
+  )
+  ..write_object(self.obj_poly)
 }
 
 ///|
