@@ -44,7 +44,7 @@ pub fn[V] Obj_func::set_poly(self : Obj_func[V], poly : Poly[V]) -> Obj_func[V] 
 pub fn[V : Eq + Semiring + Zero] Obj_func::add_term_inplace(
   self : Obj_func[V],
   variable : Variable,
-  coeff : V
+  coeff : V,
 ) -> Unit {
   self.obj_poly.add_term_inplace(variable, coeff)
 }
@@ -53,14 +53,14 @@ pub fn[V : Eq + Semiring + Zero] Obj_func::add_term_inplace(
 pub fn[V : Eq + Semiring] Obj_func::from_array(
   obj_type : String,
   arr : Array[V],
-  vars : Array[Variable]
+  vars : Array[Variable],
 ) -> Obj_func[V] {
   Obj_func::new(obj_type).set_poly(Poly::from_var_array(arr, vars))
 }
 
 ///|
 pub fn[V : Eq + Semiring + Zero + Neg] Obj_func::to_min(
-  self : Obj_func[V]
+  self : Obj_func[V],
 ) -> Obj_func[V] {
   match self.sense {
     Minimize => self
@@ -71,7 +71,7 @@ pub fn[V : Eq + Semiring + Zero + Neg] Obj_func::to_min(
 ///|
 pub fn[V : Zero] Obj_func::to_vector(
   self : Obj_func[V],
-  var_num : Int
+  var_num : Int,
 ) -> Array[V] {
   let res = self.obj_poly.to_Array()
   while res.length() <= var_num {

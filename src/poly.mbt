@@ -3,7 +3,7 @@ type Poly[V] @sorted_map.T[Variable, V] derive(Eq)
 
 ///|
 pub impl[V : Eq + Show + Semiring + @lg.One] Show for Poly[V] with to_string(
-  self
+  self,
 ) -> String {
   let mut s = ""
   let mut fst = true
@@ -33,7 +33,7 @@ pub impl[V : Eq + Show + Semiring + One] Show for Poly[V] with output(self, l) {
 
 ///|
 pub impl[V : Eq + Semiring + Zero + Neg] Neg for Poly[V] with op_neg(
-  self : Poly[V]
+  self : Poly[V],
 ) -> Poly[V] {
   let m = Poly::new()
   self
@@ -66,7 +66,7 @@ pub fn[V] Poly::new() -> Poly[V] {
 ///|
 pub fn[V : Eq + Semiring] Poly::from_var_array(
   arr : Array[V],
-  vars : Array[Variable]
+  vars : Array[Variable],
 ) -> Poly[V] {
   let res = Poly::new()
   for index, x in arr {
@@ -92,7 +92,7 @@ pub fn[V] Poly::to_Array(self : Poly[V]) -> Array[V] {
 ///|
 pub fn[V : Zero] Poly::to_vector(
   self : Poly[V],
-  vars : Array[Variable]
+  vars : Array[Variable],
 ) -> Array[V] {
   let res : Array[V] = []
   for variable in vars {
@@ -110,7 +110,7 @@ pub fn[V : Zero] Poly::to_vector(
 pub fn[V : Eq + Semiring + Zero] Poly::add_term_inplace(
   self : Poly[V],
   variable : Variable,
-  coeff : V
+  coeff : V,
 ) -> Unit {
   guard coeff != V::zero() else { return }
   if self.inner().get(variable) is None {

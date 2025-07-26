@@ -6,7 +6,7 @@ struct Constraint[V] {
 
 ///|
 pub impl[V : Show + Eq + Semiring] Show for Constraint[V] with to_string(
-  self : Constraint[V]
+  self : Constraint[V],
 ) -> String {
   let mut res = ""
   for x in self.eq_poly {
@@ -35,7 +35,7 @@ pub fn[V] Constraint::new() -> Constraint[V] {
 pub fn[V] Constraint::add_eqpoly(
   self : Constraint[V],
   poly : Poly[V],
-  b : V
+  b : V,
 ) -> Unit {
   self.eq_poly.append([(poly, b)])
 }
@@ -46,7 +46,7 @@ pub fn[V] Constraint::add_ineqpoly(
   self : Constraint[V],
   poly : Poly[V],
   s : String,
-  b : V
+  b : V,
 ) -> Unit {
   self.ineq_poly.append([(poly, s, b)])
 }
@@ -56,7 +56,7 @@ pub fn[V] Constraint::change_eqpoly(
   self : Constraint[V],
   index : Int,
   poly : Poly[V],
-  b : V
+  b : V,
 ) -> Unit {
   guard index > 0 && index < self.eq_poly.capacity() else {
     abort("Error, index is out of bound")
@@ -70,7 +70,7 @@ pub fn[V] Constraint::change_ineqpoly(
   index : Int,
   poly : Poly[V],
   s : String,
-  b : V
+  b : V,
 ) -> Unit {
   guard index > 0 && index < self.eq_poly.capacity() else {
     abort("Error, index is out of bound")
@@ -102,7 +102,7 @@ test "add_eqpoly" {
 pub fn[V : Eq + Semiring] Constraint::from_array(
   eq_array~ : Array[(Array[V], V)] = [],
   ineq_array~ : Array[(Array[V], String, V)] = [],
-  vars : Array[Variable]
+  vars : Array[Variable],
 ) -> Constraint[V] {
   let c = Constraint::new()
   for eq in eq_array {
@@ -121,7 +121,7 @@ pub fn[V : Eq + Semiring] Constraint::from_array(
 /// before use this function.Please make sure This Lp have been transformed to starand
 pub fn[V : Zero] Constraint::to_matrix(
   self : Constraint[V],
-  vars : Array[Variable]
+  vars : Array[Variable],
 ) -> Array[Array[V]] {
   let res : Array[Array[V]] = []
   for x in self.eq_poly {

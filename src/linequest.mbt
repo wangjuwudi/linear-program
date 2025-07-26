@@ -24,7 +24,7 @@ pub impl[V : Show + Eq + Semiring] Show for Lp[V] with output(self, l) -> Unit {
 /// the variable name can't be [y1,y2,...] or [z1,z2,...]
 pub fn[V : Zero] Lp::new(
   new_objfunc : Obj_func[V],
-  variable : Array[Variable]
+  variable : Array[Variable],
 ) -> Lp[V] {
   {
     vars: variable,
@@ -38,7 +38,7 @@ pub fn[V : Zero] Lp::new(
 /// obj_func function: reset it by Array[V]
 pub fn[V : Compare + Semiring + Zero] Lp::reset_obj_byarray(
   self : Lp[V],
-  arr : Array[V]
+  arr : Array[V],
 ) -> Lp[V] {
   let new_objfunc = self.obj_func.set_poly(Poly::from_var_array(arr, self.vars))
   {
@@ -55,7 +55,7 @@ pub fn[V : Compare + Semiring + Zero] Lp::reset_obj_byarray(
 pub fn[V : Eq + Semiring] Lp::cons_from_Array(
   self : Lp[V],
   eq_array~ : Array[(Array[V], V)] = [],
-  ineq_array~ : Array[(Array[V], String, V)] = []
+  ineq_array~ : Array[(Array[V], String, V)] = [],
 ) -> Lp[V] {
   let new_constraint = Constraint::from_array(eq_array~, ineq_array~, self.vars)
   {
@@ -71,7 +71,7 @@ pub fn[V : Eq + Semiring] Lp::cons_from_Array(
 pub fn[V : Eq + Semiring] Lp::from_matrix(
   lp_matrix : Matrix[V],
   vars_for_matrix : Array[Variable],
-  obj_type : String
+  obj_type : String,
 ) -> Lp[V] {
   let eq_array : Array[(Array[V], V)] = []
   let row_num = lp_matrix.row()
@@ -118,7 +118,7 @@ test "Lp_from_Matrix" {
 pub fn[V] Lp::get_coeff_matrix(self : Lp[V]) -> Matrix[V] {
   Matrix::make(self.matrix.row() - 1, self.matrix.col() - 1, fn(
     col_index : Int,
-    row_index : Int
+    row_index : Int,
   ) -> V {
     self.matrix[col_index + 1][row_index]
   })
@@ -157,7 +157,7 @@ test "get A,c,b" {
 /// this function add some Variable to Lp, they are artificial variable、remainder,relaxation variable
 /// also make sure all RHS is > 0
 pub fn[V : Eq + Semiring + Compare + Neg + Zero] Lp::to_standard(
-  self : Lp[V]
+  self : Lp[V],
 ) -> Lp[V] {
   let new_objfunc = self.obj_func.to_min()
   let new_vars = self.vars.copy()
@@ -211,7 +211,7 @@ pub fn[V : Eq + Semiring + Compare + Neg + Zero] Lp::to_standard(
 fn[V : Zero] Lp::get_Matrix(
   vars : Array[Variable],
   obj_func : Obj_func[V],
-  constraint : Constraint[V]
+  constraint : Constraint[V],
 ) -> Matrix[V] {
   let res : Array[Array[V]] = []
   let var_num = vars.length()
@@ -255,7 +255,7 @@ test "show" {
 /// add artificial variables and get init_solve
 /// return fmt (artificial_matrix, init_solve, artificial_index)
 fn[V : Zero + Compare + One] Lp::add_artificial(
-  self : Lp[V]
+  self : Lp[V],
 ) -> (Matrix[V], Array[V], Array[Int]) {
   let coeff = self.get_coeff_matrix()
   let b_array = self.get_b_vector()
@@ -313,7 +313,7 @@ fn[V : Zero + Compare + One] Lp::add_artificial(
     // integrate self.matrix and artificial_matrix, get the full_matrix
     Matrix::make(coeff.row() + 1, coeff.col() + articifical_num + 1, fn(
       row,
-      col
+      col,
     ) -> V {
       if col >= coeff.col() + articifical_num {
         if row == 0 {
@@ -377,7 +377,7 @@ test "artificial_matrix" {
 pub fn[V : Zero + Compare + Div + Mul + Sub] Lp::pivot(
   matrix : Matrix[V],
   row : Int,
-  col : Int
+  col : Int,
 ) -> Unit {
   let m_row = matrix.row()
   let m_col = matrix.col()
@@ -415,7 +415,7 @@ test "pivot" {
 ///|
 pub fn[V : Zero + One + Compare + Sub + Compare + Div + Mul] Lp::phase_1(
   p1_matrix : Matrix[V],
-  artificial_index : Array[Int]
+  artificial_index : Array[Int],
 ) -> Matrix[V] {
   // let (matrix, _, artificial_index) = self.add_artificial()
   // let p1_matrix = matrix
@@ -525,7 +525,7 @@ test "phase1" {
 ///| get base_best_solve from phase1 matrix
 pub fn[V : Zero + Compare + One + Neg] Lp::phase_2(
   var_array : Array[Variable],
-  matrix : Matrix[V]
+  matrix : Matrix[V],
 ) -> Array[V] {
   let row = matrix.row()
   let col = matrix.col()
@@ -585,7 +585,7 @@ test "phase2" {
 
 ///| make sure the to_standard() has been done
 pub fn[V : Eq + Zero + One + Compare + Mul + Div + Sub + Add + Neg] Lp::two_stage(
-  self : Lp[V]
+  self : Lp[V],
 ) -> (Array[V], V) {
   let artificial = self.add_artificial()
   let phase1 = Lp::phase_1(artificial.0, artificial.2)
