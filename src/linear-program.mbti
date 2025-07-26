@@ -1,3 +1,4 @@
+// Generated using `moon info`, DON'T EDIT IT
 package "linear-program"
 
 import(
@@ -47,7 +48,7 @@ fn[V : Eq + @luna-generic.Semiring + @luna-generic.Zero] Poly::add_term_inplace(
 fn[V : Eq + @luna-generic.Semiring + @luna-generic.Zero] Poly::copy(Self[V]) -> Self[V]
 fn[V : Eq + @luna-generic.Semiring] Poly::from_var_array(Array[V], Array[Variable]) -> Self[V]
 fn[V] Poly::new() -> Self[V]
-fn[V] Poly::to_Array(Self[V]) -> Array[V]
+fn[V] Poly::to_array(Self[V]) -> Array[V]
 fn[V : @luna-generic.Zero] Poly::to_vector(Self[V], Array[Variable]) -> Array[V]
 impl[V : Eq] Eq for Poly[V]
 impl[V : Eq + @luna-generic.Semiring + @luna-generic.Zero + Neg] Neg for Poly[V]

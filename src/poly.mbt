@@ -71,7 +71,7 @@ pub fn[V : Eq + Semiring] Poly::from_var_array(
 }
 
 ///|
-pub fn[V] Poly::to_Array(self : Poly[V]) -> Array[V] {
+pub fn[V] Poly::to_array(self : Poly[V]) -> Array[V] {
   let res : Array[V] = []
   for x in self.inner() {
     res.push(x.1)
