@@ -53,9 +53,9 @@ test "Neg" {
   poly.add_term_inplace(x1, 3.5)
   poly.add_term_inplace(x2, 1.5)
   poly.add_term_inplace(x3, -2)
-  println(poly)
-  println(-poly)
-  println(-(-poly))
+  inspect(poly, content="3.5x1 + 1.5x2 + -2x3")
+  inspect(-poly, content="-3.5x1 + -1.5x2 + 2x3")
+  inspect(-(-poly), content="3.5x1 + 1.5x2 + -2x3")
 }
 
 ///|

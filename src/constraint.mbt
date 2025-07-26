@@ -89,13 +89,26 @@ test "add_eqpoly" {
   poly.add_term_inplace(x2, 1.5)
   poly.add_term_inplace(x3, -2)
   con.add_eqpoly(poly, 3.7)
-  println(con)
+  inspect(
+    con,
+    content=(
+      #|s.t. 3.5x1 + 1.5x2 + -2x3 = 3.7
+      #|     
+    ),
+  )
   let poly = Poly::new()
   poly.add_term_inplace(x1, 3.5)
   poly.add_term_inplace(x2, 1.5)
   poly.add_term_inplace(x3, -2)
   con.add_eqpoly(poly, 3.9)
-  println(con)
+  inspect(
+    con,
+    content=(
+      #|s.t. 3.5x1 + 1.5x2 + -2x3 = 3.7
+      #|     3.5x1 + 1.5x2 + -2x3 = 3.9
+      #|     
+    ),
+  )
 }
 
 ///|

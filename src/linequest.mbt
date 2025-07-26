@@ -111,7 +111,17 @@ test "Lp_from_Matrix" {
     [0, 3, 8, 1, 2],
   ])
   let lp = Lp::from_matrix(matrix, vars, "min")
-  println(lp)
+  inspect(
+    lp,
+    content=(
+      #|min  x1 + 2x2 + 3x3 + 4x4
+      #|s.t. 4x1 + 5x2 + 5x4 = 1
+      #|     x1 + -4x2 + 5x3 + x4 = 0
+      #|     3x2 + 8x3 + x4 = 2
+      #|      x1 : [0, 1.7976931348623157e+308] x2 : [0, 1.7976931348623157e+308] x3 : [0, 1.7976931348623157e+308] x4 : [0, 1.7976931348623157e+308]
+      #|
+    ),
+  )
 }
 
 ///|
@@ -146,10 +156,23 @@ test "get A,c,b" {
   let obj_func = Obj_func::from_array("min", [1, 2, 3, 4, 5], vars)
   let eq_con = [([1, 2, 3, 0, 5], 0), ([1, 7, 0, 4, 3], 0)]
   let lp = Lp::new(obj_func, vars).cons_from_Array(eq_array=eq_con)
-  println(lp.matrix)
-  println(lp.get_coeff_matrix())
-  println(lp.get_objfunc_vector())
-  println(lp.get_b_vector())
+  inspect(
+    lp.matrix,
+    content=(
+      #||1, 2, 3, 4, 5, 0|
+      #||1, 2, 3, 0, 5, 0|
+      #||1, 7, 0, 4, 3, 0|
+    ),
+  )
+  inspect(
+    lp.get_coeff_matrix(),
+    content=(
+      #||1, 2, 3, 0, 5|
+      #||1, 7, 0, 4, 3|
+    ),
+  )
+  inspect(lp.get_objfunc_vector(), content="[1, 2, 3, 4, 5]")
+  inspect(lp.get_b_vector(), content="[0, 0]")
 }
 
 ///|
@@ -243,10 +266,44 @@ test "show" {
     ineq_array=ineqarr,
   )
   let lp3 = lp2.to_standard()
-  println(lp2)
-  println(lp2.matrix)
-  println(lp3)
-  println(lp3.matrix)
+  inspect(
+    lp2,
+    content=(
+      #|max  x1 + 2x2 + 3x3
+      #|s.t. 2x1 + 2x2 + 3x3 = 100
+      #|     2.5x1 + 4.7x3 >= 0
+      #|    -1.7x1 + 2.5x2 + 12x3 <= 0
+      #|     x1 : [0, 100] x2 : [0, 100] x3 : [0, 100]
+      #|
+    ),
+  )
+  inspect(
+    lp2.matrix,
+    content=(
+      #||1, 2, 3, 0|
+      #||2, 2, 3, 100|
+    ),
+  )
+  inspect(
+    lp3,
+    content=(
+      #|min  -1x1 + -2x2 + -3x3
+      #|s.t. 2x1 + 2x2 + 3x3 = 100
+      #|     -2.5x1 + -4.7x3 + y1 = 0
+      #|     -1.7x1 + 2.5x2 + 12x3 + y2 = 0
+      #|      x1 : [0, 100] x2 : [0, 100] x3 : [0, 100] y1 : [0, 1.7976931348623157e+308] y2 : [0, 1.7976931348623157e+308]
+      #|
+    ),
+  )
+  inspect(
+    lp3.matrix,
+    content=(
+      #||-1, -2, -3, 0, 0, 0|
+      #||2, 2, 3, 0, 0, 100|
+      #||-2.5, 0, -4.7, 1, 0, 0|
+      #||-1.7, 2.5, 12, 0, 1, 0|
+    ),
+  )
 }
 
 // *** Solve Linear Program *** //
@@ -350,11 +407,31 @@ test "artificial_matrix" {
     [-1, 4, 7, 1, 2],
   ])
   let lp = Lp::from_matrix(matrix, vars, "min")
-  println("LP问题的矩阵形式,第一行为目标函数： \n\{lp.matrix}")
+  // LP问题的矩阵形式,第一行为目标函数：
+  inspect(
+    lp.matrix,
+    content=(
+      #||1, 2, 3, 4, 0|
+      #||4, 1, 0, 6, 1|
+      #||1, 3, 1, 0, 0|
+      #||-1, 4, 7, 1, 2|
+    ),
+  )
   let x = lp.add_artificial()
-  println("添加人工变量后的LP矩阵：\n\{x.0}")
-  println("初始解： \{x.1}")
-  println("单位列的索引： \{x.2}")
+  // 添加人工变量后的LP矩阵
+  inspect(
+    x.0,
+    content=(
+      #||0, 0, 0, 0, 1, 1, 1, 0|
+      #||4, 1, 0, 6, 1, 0, 0, 1|
+      #||1, 3, 1, 0, 0, 1, 0, 0|
+      #||-1, 4, 7, 1, 0, 0, 1, 2|
+    ),
+  )
+  // 初始解
+  inspect(x.1, content="[0, 0, 0, 0, 1, 0, 2]")
+  // 单位列的索引
+  inspect(x.2, content="[4, 5, 6]")
 
   //test 2
   let vars = [
@@ -366,11 +443,30 @@ test "artificial_matrix" {
   let lp = Lp::new(obj_func, vars)
     .cons_from_Array(ineq_array=ineq)
     .to_standard()
-  println("LP问题的矩阵形式,第一行为目标函数： \n\{lp.matrix}")
+
+  // LP问题的矩阵形式,第一行为目标函数
+  inspect(
+    lp.matrix,
+    content=(
+      #||-3, -4, 0, 0, 0|
+      #||2, 1, 1, 0, 12|
+      #||1, 3, 0, 1, 10|
+    ),
+  )
   let x = lp.add_artificial()
-  println("添加人工变量后的LP矩阵：\n\{x.0}")
-  println("初始解： \{x.1}")
-  println("单位列的索引： \{x.2}")
+  // 添加人工变量后的LP矩阵：
+  inspect(
+    x.0,
+    content=(
+      #||-3, -4, 0, 0, 0|
+      #||2, 1, 1, 0, 12|
+      #||1, 3, 0, 1, 10|
+    ),
+  )
+  // 初始解
+  inspect(x.1, content="[0, 0, 12, 10]")
+  // 单位列的索引
+  inspect(x.2, content="[0, 0]")
 }
 
 ///|
@@ -409,7 +505,16 @@ test "pivot" {
     [1, 3, 1, 0, 0],
     [-1, 4, 7, 1, 2],
   ])
-  println(Lp::pivot(matrix, 1, 1))
+  Lp::pivot(matrix, 1, 1)
+  inspect(
+    matrix,
+    content=(
+      #||-7, 0, 3, -8, -2|
+      #||4, 1, 0, 6, 1|
+      #||-11, 0, 1, -18, -3|
+      #||-17, 0, 7, -23, -2|
+    ),
+  )
 }
 
 ///|
@@ -466,7 +571,7 @@ pub fn[V : Zero + One + Compare + Sub + Compare + Div + Mul] Lp::phase_1(
       }
     } else {
       if flag {
-        println("Phase1 no_bound result")
+        //println("Phase1 no_bound result")
         break
       }
     }
@@ -493,8 +598,14 @@ test "phase1" {
     .to_standard()
   let artificial = lp.add_artificial()
   let x = Lp::phase_1(artificial.0, artificial.2)
-  println(x)
-  println("\n")
+  inspect(
+    x,
+    content=(
+      #||0, 0, 1, 1, 22|
+      #||1, 0, 0.6, -0.19999999999999998, 5.199999999999999|
+      #||0, 1, -0.19999999999999998, 0.39999999999999997, 1.6000000000000005|
+    ),
+  )
   let matrix : Matrix[Double] = Matrix::from_2d_array([
     [5, 4, 0],
     [2, 3, 7],
@@ -503,8 +614,14 @@ test "phase1" {
   let lp = Lp::from_matrix(matrix, vars, "max")
   let artificial = lp.add_artificial()
   let x = Lp::phase_1(artificial.0, artificial.2)
-  println(x)
-  println("\n")
+  inspect(
+    x,
+    content=(
+      #||0, 0, 0.9999999999999998, 1.0000000000000002, 1.3322676295501878e-15|
+      #||0, 1, 0.5999999999999999, -0.39999999999999997, 1.0000000000000004|
+      #||1, 0, -0.39999999999999997, 0.6, 1.9999999999999998|
+    ),
+  )
   let vars = [
     Variable::new("x1", 0.0, @double.max_value),
     Variable::new("x2", 0.0, @double.max_value),
@@ -518,8 +635,14 @@ test "phase1" {
   let lp = Lp::from_matrix(matrix, vars, "min")
   let artificial = lp.add_artificial()
   let x = Lp::phase_1(artificial.0, artificial.2)
-  println(x)
-  println("\n")
+  inspect(
+    x,
+    content=(
+      #||0, 0, 1.8503717077085943e-16, 1, 1, 4.440892098500627e-16|
+      #||0, 1, 1.6666666666666667, 0.6666666666666666, -0.3333333333333333, 4.000000000000001|
+      #||1, 0, -0.33333333333333337, -0.3333333333333333, 0.6666666666666666, 1.9999999999999991|
+    ),
+  )
 }
 
 ///| get base_best_solve from phase1 matrix
@@ -568,18 +691,38 @@ test "phase2" {
     [2, 1, 1, 8],
   ])
   let lp = Lp::from_matrix(matrix, vars, "min").to_standard()
-  println(lp)
+  inspect(
+    lp,
+    content=(
+      #|min  -1x1 + -2x2 + -3x3
+      #|s.t. x1 + 2x2 + 3x3 = 10
+      #|     2x1 + x2 + x3 = 8
+      #|      x1 : [0, 1.7976931348623157e+308] x2 : [0, 1.7976931348623157e+308] x3 : [0, 1.7976931348623157e+308]
+      #|
+    ),
+  )
   let artificial = lp.add_artificial()
   let phase1 = Lp::phase_1(artificial.0, artificial.2)
-  println(phase1)
+  inspect(
+    phase1,
+    content=(
+      #||0, 0, 1.8503717077085943e-16, 1, 1, 4.440892098500627e-16|
+      #||0, 1, 1.6666666666666667, 0.6666666666666666, -0.3333333333333333, 4.000000000000001|
+      #||1, 0, -0.33333333333333337, -0.3333333333333333, 0.6666666666666666, 1.9999999999999991|
+    ),
+  )
   let phase2 = Lp::phase_2(vars, phase1)
   let obj_func = lp.get_objfunc_vector()
   let mut res = 0.0
   for index, x in obj_func {
     res = res + x * phase2[index]
   }
-  println(
+  inspect(
     "variables：\{vars}, The_best_base_solve：\{phase2}\nThe Object_function result：\{res}",
+    content=(
+      #|variables：[x1, x2, x3], The_best_base_solve：[1.9999999999999991, 4.000000000000001, 0]
+      #|The Object_function result：-10
+    ),
   )
 }
 
@@ -615,9 +758,9 @@ test "two_stage" {
   ])
   let lp = Lp::from_matrix(matrix, vars, "min").to_standard()
   let res = lp.two_stage()
-  println(vars)
-  println(res.0)
-  println(res.1)
+  inspect(vars, content="[x1, x2, x3]")
+  inspect(res.0, content="[1.9999999999999991, 4.000000000000001, 0]")
+  inspect(res.1, content="-10")
 
   // example 2  constrains'labels are '<=' 
   // max cx
@@ -632,9 +775,9 @@ test "two_stage" {
     .cons_from_Array(ineq_array=ineq)
     .to_standard()
   let res = lp.two_stage()
-  println(vars)
-  println(res.0)
-  println(-res.1) //because source problem is "MAX", so real_res = -res
+  inspect(vars, content="[x1, x2]")
+  inspect(res.0, content="[5.199999999999999, 1.6000000000000005, 0, 0]")
+  inspect(-res.1, content="22") //because source problem is "MAX", so real_res = -res
 
   // example 3  constrains'labels are '>=' 
   // min cx
@@ -649,10 +792,9 @@ test "two_stage" {
     .cons_from_Array(ineq_array=ineq)
     .to_standard()
   let res = lp.two_stage()
-  println(vars)
-  println(res.0)
-  println(res.1)
-  println("\n")
+  inspect(vars, content="[x1, x2]")
+  inspect(res.0, content="[5.199999999999999, 1.6000000000000005, 0, 0]")
+  inspect(res.1, content="22")
 
   // special example 1
   // min cx
@@ -666,12 +808,21 @@ test "two_stage" {
   let lp = Lp::new(obj_func, vars)
     .cons_from_Array(ineq_array=ineq)
     .to_standard()
-  println(lp)
+  inspect(
+    lp,
+    content=(
+      #|min  3x1 + 4x2
+      #|s.t. 2x1 + x2 + y1 = 12
+      #|     x1 + 3x2 + y2 = 10
+      #|      x1 : [0, 1.7976931348623157e+308] x2 : [0, 1.7976931348623157e+308] y1 : [0, 1.7976931348623157e+308] y2 : [0, 1.7976931348623157e+308]
+      #|
+    ),
+  )
   let res = lp.two_stage()
-  println(vars)
-  println(res.0)
-  println(res.1)
-  println("\n")
+  inspect(vars, content="[x1, x2]")
+  inspect(res.0, content="[0, 0, 12, 10]")
+  inspect(res.1, content="0")
+
   // special example 2
   // max cx
   // s.t. Ax >= b
@@ -684,12 +835,20 @@ test "two_stage" {
   let lp = Lp::new(obj_func, vars)
     .cons_from_Array(ineq_array=ineq)
     .to_standard()
-  println(lp)
+  inspect(
+    lp,
+    content=(
+      #|min  -3x1 + -4x2
+      #|s.t. 2x1 + x2 + -1y1 = 12
+      #|     x1 + 3x2 + -1y2 = 10
+      #|      x1 : [0, 1.7976931348623157e+308] x2 : [0, 1.7976931348623157e+308] y1 : [0, 1.7976931348623157e+308] y2 : [0, 1.7976931348623157e+308]
+      #|
+    ),
+  )
   let res = lp.two_stage()
-  println(vars)
-  println(res.0)
-  println(res.1)
-  println("\n")
+  inspect(vars, content="[x1, x2]")
+  inspect(res.0, content="[5.199999999999999, 1.6000000000000005, 0, 0]")
+  inspect(res.1, content="-22")
 
   // no-solve example 1
   // let vars = [
@@ -706,11 +865,11 @@ test "two_stage" {
   //   ([2.0, 1.0], "<=", 10.0)
   // ]
   // let lp = Lp::new(obj_func, vars).cons_from_Array(ineq_array = ineq).to_standard()
-  // println(lp)
+  // inspect(lp)
   // let res = lp.two_stage()
-  // println(vars)
-  // println(res.0)
-  // println(res.1)
-  // println("\n")
+  // inspect(vars)
+  // inspect(res.0)
+  // inspect(res.1)
+  // inspect("\n")
 
 }

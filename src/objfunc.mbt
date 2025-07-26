@@ -90,6 +90,6 @@ test "show" {
   poly.add_term_inplace(x2, 1.5)
   poly.add_term_inplace(x3, -2)
   let obj_func = Obj_func::new("max").set_poly(poly)
-  println(obj_func)
-  println(obj_func.to_min())
+  inspect(obj_func, content="max  3.5x1 + 1.5x2 + -2x3")
+  inspect(obj_func.to_min(), content="min  -3.5x1 + -1.5x2 + 2x3")
 }
