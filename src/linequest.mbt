@@ -75,12 +75,12 @@ pub fn[V : Eq + Semiring] Lp::from_matrix(
   let row_num = lp_matrix.row()
   let col_num = lp_matrix.col()
   for i in 1..<row_num {
-    eq_array.append([
+    eq_array.push(
       (
         lp_matrix.row_to_array(i)[:col_num - 1].to_array(),
         lp_matrix[i][col_num - 1],
       ),
-    ])
+    )
   }
   {
     vars: vars_for_matrix,
@@ -198,7 +198,7 @@ pub fn[V : Eq + Semiring + Compare + Neg + Zero] Lp::to_standard(
     let (poly, s, b) = x
     let variable = Variable::new("y" + count.to_string(), 0, @double.max_value)
     count += 1
-    new_vars.append([variable])
+    new_vars.push(variable)
     if s == ">=" {
       if b <= V::zero() {
         let temp_poly = -poly
@@ -236,7 +236,7 @@ fn[V : Zero] Lp::get_Matrix(
 ) -> Matrix[V] {
   let res : Array[Array[V]] = []
   let var_num = vars.length()
-  res.append([obj_func.to_vector(var_num)])
+  res.push(obj_func.to_vector(var_num))
   res.append(constraint.to_matrix(vars))
   Matrix::from_2d_array(res)
 }
@@ -344,7 +344,7 @@ fn[V : Zero + Compare + One] Lp::add_artificial(
           artificial_matrix[k][articifical_num] = V::one()
         }
       }
-      init_solve.append([b_array[i]])
+      init_solve.push(b_array[i])
       artificial_index[i] = coeff.col() + articifical_num
       articifical_num += 1
     }

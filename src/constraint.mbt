@@ -39,7 +39,7 @@ pub fn[V] Constraint::add_eqpoly(
   poly : Poly[V],
   b : V,
 ) -> Unit {
-  self.eq_poly.append([(poly, b)])
+  self.eq_poly.push((poly, b))
 }
 
 ///|
@@ -50,7 +50,7 @@ pub fn[V] Constraint::add_ineqpoly(
   s : String,
   b : V,
 ) -> Unit {
-  self.ineq_poly.append([(poly, s, b)])
+  self.ineq_poly.push((poly, s, b))
 }
 
 ///|
@@ -141,8 +141,8 @@ pub fn[V : Zero] Constraint::to_matrix(
   let res : Array[Array[V]] = []
   for x in self.eq_poly {
     let temp_array = x.0.to_vector(vars)
-    temp_array.append([x.1])
-    res.append([temp_array])
+    temp_array.push(x.1)
+    res.push(temp_array)
   }
   res
 }

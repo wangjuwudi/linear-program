@@ -74,7 +74,7 @@ pub fn[V : Zero] Obj_func::to_vector(
 ) -> Array[V] {
   let res = self.obj_poly.to_Array()
   while res.length() <= var_num {
-    res.append([V::zero()])
+    res.push(V::zero())
   }
   res
 }

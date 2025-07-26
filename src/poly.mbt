@@ -74,7 +74,7 @@ pub fn[V : Eq + Semiring] Poly::from_var_array(
 pub fn[V] Poly::to_Array(self : Poly[V]) -> Array[V] {
   let res : Array[V] = []
   for x in self.inner() {
-    res.append([x.1])
+    res.push(x.1)
   }
   res
 }
@@ -86,10 +86,10 @@ pub fn[V : Zero] Poly::to_vector(
 ) -> Array[V] {
   let res : Array[V] = []
   for variable in vars {
-    res.append(
+    res.push(
       match self.inner().get(variable) {
-        None => [V::zero()]
-        Some(x) => [x]
+        None => V::zero()
+        Some(x) => x
       },
     )
   }
