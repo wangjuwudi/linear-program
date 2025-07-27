@@ -86,7 +86,7 @@ pub fn[V : Eq + Semiring] Lp::from_matrix(
     vars: vars_for_matrix,
     obj_func: Obj_func::from_array(
       obj_type,
-      lp_matrix.row_to_array(0)[:col_num].to_array(),
+      lp_matrix.row_to_array(0)[:col_num - 1].to_array(),
       vars_for_matrix,
     ),
     constraint: Constraint::from_array(eq_array~, vars_for_matrix),
@@ -405,7 +405,7 @@ test "artificial_matrix" {
     [-1, 4, 7, 1, 2],
   ])
   let lp = Lp::from_matrix(matrix, vars, "min")
-  // LP问题的矩阵形式,第一行为目标函数：
+  // The matrix form of LP problem, the first line is the objective function:
   inspect(
     lp.matrix,
     content=(
@@ -416,7 +416,7 @@ test "artificial_matrix" {
     ),
   )
   let x = lp.add_artificial()
-  // 添加人工变量后的LP矩阵
+  // LP matrix after adding artificial variables
   inspect(
     x.0,
     content=(
@@ -426,9 +426,9 @@ test "artificial_matrix" {
       #||-1, 4, 7, 1, 0, 0, 1, 2|
     ),
   )
-  // 初始解
+  // Initial Solution
   inspect(x.1, content="[0, 0, 0, 0, 1, 0, 2]")
-  // 单位列的索引
+  // Index of artificial Column
   inspect(x.2, content="[4, 5, 6]")
 
   //test 2
@@ -442,7 +442,7 @@ test "artificial_matrix" {
     .cons_from_Array(ineq_array=ineq)
     .to_standard()
 
-  // LP问题的矩阵形式,第一行为目标函数
+  // The matrix form of LP problem, the first line is the objective function:
   inspect(
     lp.matrix,
     content=(
@@ -452,7 +452,7 @@ test "artificial_matrix" {
     ),
   )
   let x = lp.add_artificial()
-  // 添加人工变量后的LP矩阵：
+  // LP matrix after adding artificial variables
   inspect(
     x.0,
     content=(
@@ -461,9 +461,9 @@ test "artificial_matrix" {
       #||1, 3, 0, 1, 10|
     ),
   )
-  // 初始解
+  // Initial Solution
   inspect(x.1, content="[0, 0, 12, 10]")
-  // 单位列的索引
+  // Index of artificial Column
   inspect(x.2, content="[0, 0]")
 }
 
@@ -479,6 +479,7 @@ pub fn[V : Zero + Compare + Div + Mul + Sub] Lp::pivot(
   let pivot_val = matrix[row][col]
   if pivot_val == V::zero() {
     println("pivot error, (\{row}, \{col}) is zero!")
+    abort("pivot error, (\{row}, \{col}) is zero!")
   } else {
     for j in 0..<m_col {
       matrix[row][j] = matrix[row][j] / pivot_val
@@ -531,9 +532,6 @@ pub fn[V : Zero + One + Compare + Sub + Compare + Div + Mul] Lp::phase_1(
       }
     }
   }
-
-  //println(p1_matrix)
-  //println(artificial_index)
   while true {
 
     // find in_base_var
@@ -569,16 +567,11 @@ pub fn[V : Zero + One + Compare + Sub + Compare + Div + Mul] Lp::phase_1(
       }
     } else {
       if flag {
-        //println("Phase1 no_bound result")
+        println("Phase1 no_bound result")
         break
       }
     }
-
-    //println("main value:(\{out_base_index}, \{in_base_index})") 
-    //println("By col index, in_base_index: \{in_base_index}, out_base_index: \{artificial_index[out_base_index-1]}")
-
     Lp::pivot(p1_matrix, out_base_index, in_base_index)
-    //println(p1_matrix)
   }
   p1_matrix
 }
@@ -644,15 +637,21 @@ test "phase1" {
 }
 
 ///| get base_best_solve from phase1 matrix
-pub fn[V : Zero + Compare + One + Neg] Lp::phase_2(
+pub fn[V : Zero + One + Eq + Show + Compare + Neg] Lp::phase_2(
   var_array : Array[Variable],
   matrix : Matrix[V],
 ) -> Array[V] {
   let row = matrix.row()
   let col = matrix.col()
   let var_num = var_array.length()
-  guard var_num == col - 1 ||
-    (matrix[0][col - 1] < V::one() && matrix[0][col - 1] > -V::one()) else {
+  println(matrix[0][col-1])
+  /// these need correct  [Double_Eq] 
+  // guard var_num == col - 1 || matrix[0][col-1] == V::zero() else {
+  //   println("W* from Phase1 isn't zero, Lp doesn't have solution ")
+  //   abort("W* from Phase1 isn't zero, Lp doesn't have solution ")
+  // }
+  guard var_num == col - 1 || (matrix[0][col-1] < V::one() || matrix[0][col-1] > -V::one()) else {
+    println("W* from Phase1 isn't zero, Lp doesn't have solution ")
     abort("W* from Phase1 isn't zero, Lp doesn't have solution ")
   }
   let best_base_solve = Array::make(var_num, V::zero())
@@ -725,11 +724,12 @@ test "phase2" {
 }
 
 ///| make sure the to_standard() has been done
-pub fn[V : Eq + Zero + One + Compare + Mul + Div + Sub + Add + Neg] Lp::two_stage(
+pub fn[V : Eq + Zero + One + Compare + Mul + Div + Sub + Add + Show + Neg] Lp::two_stage(
   self : Lp[V],
 ) -> (Array[V], V) {
   let artificial = self.add_artificial()
   let phase1 = Lp::phase_1(artificial.0, artificial.2)
+  println(phase1)
   let phase2 = Lp::phase_2(self.vars, phase1)
   let obj_func = self.get_objfunc_vector()
   let mut res = V::zero()
@@ -776,7 +776,7 @@ test "two_stage" {
   inspect(vars, content="[x1, x2]")
   inspect(res.0, content="[5.199999999999999, 1.6000000000000005, 0, 0]")
   inspect(-res.1, content="22") //because source problem is "MAX", so real_res = -res
-
+  println("example 3")
   // example 3  constrains'labels are '>=' 
   // min cx
   // s.t.  Ax >= b
@@ -793,7 +793,7 @@ test "two_stage" {
   inspect(vars, content="[x1, x2]")
   inspect(res.0, content="[5.199999999999999, 1.6000000000000005, 0, 0]")
   inspect(res.1, content="22")
-
+  println("special example")
   // special example 1
   // min cx
   // s.t. Ax <= b
@@ -848,7 +848,7 @@ test "two_stage" {
   inspect(res.0, content="[5.199999999999999, 1.6000000000000005, 0, 0]")
   inspect(res.1, content="-22")
 
-  // no-solve example 1
+  // no-solve example 1; this example will make abort()
   // let vars = [
   //   Variable::new("x1", 0.0, @double.max_value),
   //   Variable::new("x2", 0.0, @double.max_value)
