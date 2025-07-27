@@ -60,10 +60,10 @@ pub fn[V : Eq + Semiring] Poly::from_var_array(
 ) -> Poly[V] {
   let res = Poly::new()
   for index, x in arr {
-    if index < arr.length() && x != V::zero() {
+    if index < vars.length() && x != V::zero() {
       res.inner().add(vars[index], x)
     }
-    if index >= arr.length() {
+    if index >= vars.length() {
       res.inner().add(Variable::one(), x)
     }
   }
