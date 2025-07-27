@@ -11,16 +11,15 @@ struct Obj_func[V] {
 }
 
 ///|
-pub impl[V : Eq + Show + Semiring] Show for Obj_func[V] with to_string(self) -> String {
-  match self.sense {
-    Minimize => "min  " + self.obj_poly.to_string()
-    Maximize => "max  " + self.obj_poly.to_string()
-  }
-}
-
-///|
 pub impl[V : Eq + Show + Semiring] Show for Obj_func[V] with output(self, l) {
-  l.write_string(self.to_string())
+  l
+  ..write_string(
+    match self.sense {
+      Minimize => "min  "
+      Maximize => "max  "
+    },
+  )
+  ..write_object(self.obj_poly)
 }
 
 ///|
@@ -44,7 +43,7 @@ pub fn[V] Obj_func::set_poly(self : Obj_func[V], poly : Poly[V]) -> Obj_func[V] 
 pub fn[V : Eq + Semiring + Zero] Obj_func::add_term_inplace(
   self : Obj_func[V],
   variable : Variable,
-  coeff : V
+  coeff : V,
 ) -> Unit {
   self.obj_poly.add_term_inplace(variable, coeff)
 }
@@ -53,14 +52,14 @@ pub fn[V : Eq + Semiring + Zero] Obj_func::add_term_inplace(
 pub fn[V : Eq + Semiring] Obj_func::from_array(
   obj_type : String,
   arr : Array[V],
-  vars : Array[Variable]
+  vars : Array[Variable],
 ) -> Obj_func[V] {
   Obj_func::new(obj_type).set_poly(Poly::from_var_array(arr, vars))
 }
 
 ///|
 pub fn[V : Eq + Semiring + Zero + Neg] Obj_func::to_min(
-  self : Obj_func[V]
+  self : Obj_func[V],
 ) -> Obj_func[V] {
   match self.sense {
     Minimize => self
@@ -71,11 +70,11 @@ pub fn[V : Eq + Semiring + Zero + Neg] Obj_func::to_min(
 ///|
 pub fn[V : Zero] Obj_func::to_vector(
   self : Obj_func[V],
-  var_num : Int
+  var_num : Int,
 ) -> Array[V] {
-  let res = self.obj_poly.to_Array()
+  let res = self.obj_poly.to_array()
   while res.length() <= var_num {
-    res.append([V::zero()])
+    res.push(V::zero())
   }
   res
 }
@@ -90,6 +89,6 @@ test "show" {
   poly.add_term_inplace(x2, 1.5)
   poly.add_term_inplace(x3, -2)
   let obj_func = Obj_func::new("max").set_poly(poly)
-  println(obj_func)
-  println(obj_func.to_min())
+  inspect(obj_func, content="max  3.5x1 + 1.5x2 + -2x3")
+  inspect(obj_func.to_min(), content="min  -3.5x1 + -1.5x2 + 2x3")
 }

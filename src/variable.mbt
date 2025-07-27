@@ -22,22 +22,12 @@ pub impl One for Variable with one() -> Variable {
 
 ///|
 pub impl Compare for Variable with compare(self, other) -> Int {
-  if self.name == other.name {
-    0
-  } else if self.name > other.name {
-    1
-  } else {
-    -1
-  }
+  self.name.compare(other.name)
 }
 
 ///|
 pub impl Eq for Variable with op_equal(self, other) -> Bool {
-  if self.name == other.name {
-    true
-  } else {
-    false
-  }
+  self.name == other.name
 }
 
 ///|
