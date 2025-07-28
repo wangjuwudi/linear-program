@@ -637,23 +637,22 @@ test "phase1" {
 }
 
 ///| get base_best_solve from phase1 matrix
-pub fn[V : Zero + One + Eq + Show + Compare + Neg] Lp::phase_2(
+pub fn[V : Zero + One + Eq + ApproximatelyZero] Lp::phase_2(
   var_array : Array[Variable],
   matrix : Matrix[V],
 ) -> Array[V] {
   let row = matrix.row()
   let col = matrix.col()
   let var_num = var_array.length()
-  println(matrix[0][col-1])
-  /// these need correct  [Double_Eq] 
-  // guard var_num == col - 1 || matrix[0][col-1] == V::zero() else {
-  //   println("W* from Phase1 isn't zero, Lp doesn't have solution ")
-  //   abort("W* from Phase1 isn't zero, Lp doesn't have solution ")
-  // }
-  guard var_num == col - 1 || (matrix[0][col-1] < V::one() || matrix[0][col-1] > -V::one()) else {
+  // W* is zero OR artificial_var_num is zero
+  guard var_num == col - 1 || V::is_zero_eps(matrix[0][col-1]) else {
     println("W* from Phase1 isn't zero, Lp doesn't have solution ")
     abort("W* from Phase1 isn't zero, Lp doesn't have solution ")
   }
+  // guard var_num == col - 1 || (matrix[0][col-1] < V::one() || matrix[0][col-1] > -V::one()) else {
+  //   println("W* from Phase1 isn't zero, Lp doesn't have solution ")
+  //   abort("W* from Phase1 isn't zero, Lp doesn't have solution ")
+  // }
   let best_base_solve = Array::make(var_num, V::zero())
 
   // Count the number of non-zero elements in each column
@@ -724,12 +723,11 @@ test "phase2" {
 }
 
 ///| make sure the to_standard() has been done
-pub fn[V : Eq + Zero + One + Compare + Mul + Div + Sub + Add + Show + Neg] Lp::two_stage(
+pub fn[V : Eq + Zero + One + Compare + Mul + Div + Sub + Add + ApproximatelyZero] Lp::two_stage(
   self : Lp[V],
 ) -> (Array[V], V) {
   let artificial = self.add_artificial()
   let phase1 = Lp::phase_1(artificial.0, artificial.2)
-  println(phase1)
   let phase2 = Lp::phase_2(self.vars, phase1)
   let obj_func = self.get_objfunc_vector()
   let mut res = V::zero()
@@ -776,7 +774,6 @@ test "two_stage" {
   inspect(vars, content="[x1, x2]")
   inspect(res.0, content="[5.199999999999999, 1.6000000000000005, 0, 0]")
   inspect(-res.1, content="22") //because source problem is "MAX", so real_res = -res
-  println("example 3")
   // example 3  constrains'labels are '>=' 
   // min cx
   // s.t.  Ax >= b
@@ -870,4 +867,14 @@ test "two_stage" {
   // inspect(res.1)
   // inspect("\n")
 
+}
+
+/// test ApproxomatelyZero
+pub fn [V: ApproximatelyZero] double_equal_to_zero(x : V) -> Bool{
+  V::is_zero_eps(x)
+}
+
+test "equal_to_0" {
+  let x = 1.5e-17
+  println(double_equal_to_zero(x))
 }
