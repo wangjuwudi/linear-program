@@ -645,7 +645,7 @@ pub fn[V : Zero + One + Eq + ApproximatelyZero] Lp::phase_2(
   let col = matrix.col()
   let var_num = var_array.length()
   // W* is zero OR artificial_var_num is zero
-  guard var_num == col - 1 || V::is_zero_eps(matrix[0][col-1]) else {
+  guard var_num == col - 1 || V::is_zero_eps(matrix[0][col - 1]) else {
     println("W* from Phase1 isn't zero, Lp doesn't have solution ")
     abort("W* from Phase1 isn't zero, Lp doesn't have solution ")
   }
@@ -723,7 +723,9 @@ test "phase2" {
 }
 
 ///| make sure the to_standard() has been done
-pub fn[V : Eq + Zero + One + Compare + Mul + Div + Sub + Add + ApproximatelyZero] Lp::two_stage(
+pub fn[
+  V : Eq + Zero + One + Compare + Mul + Div + Sub + Add + ApproximatelyZero,
+] Lp::two_stage(
   self : Lp[V],
 ) -> (Array[V], V) {
   let artificial = self.add_artificial()
@@ -790,7 +792,7 @@ test "two_stage" {
   inspect(vars, content="[x1, x2]")
   inspect(res.0, content="[5.199999999999999, 1.6000000000000005, 0, 0]")
   inspect(res.1, content="22")
-  println("special example")
+
   // special example 1
   // min cx
   // s.t. Ax <= b
@@ -869,12 +871,13 @@ test "two_stage" {
 
 }
 
-/// test ApproxomatelyZero
-pub fn [V: ApproximatelyZero] double_equal_to_zero(x : V) -> Bool{
+///| test ApproxomatelyZero
+pub fn[V : ApproximatelyZero] double_equal_to_zero(x : V) -> Bool {
   V::is_zero_eps(x)
 }
 
+///|
 test "equal_to_0" {
   let x = 1.5e-17
-  println(double_equal_to_zero(x))
+  inspect(double_equal_to_zero(x), content = "true")
 }
