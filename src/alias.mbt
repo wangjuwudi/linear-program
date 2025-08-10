@@ -19,7 +19,7 @@ pub impl ApproximatelyZero for Int with is_zero_eps(x) {
 ///|
 pub impl ApproximatelyZero for Double with is_zero_eps(x) {
   if x < 0.0 {
-    x > 1.0e-15
+    x > -1.0e-15
   } else {
     x < 1.0e-15
   }
